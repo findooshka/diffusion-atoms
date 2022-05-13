@@ -2,8 +2,7 @@ import torch
 from jarvis.core.atoms import Atoms
 import numpy as np
 
-from functions.atomic import get_output, return_to_lattice, add_random_atoms, get_L_inv_estimate, B6_transform, B6_inv_transform
-from functions.isometry import B9_to_B6, B6_to_B9#, get_isometry
+from functions.atomic import get_output, return_to_lattice, add_random_atoms, get_L_inv_estimate, B6_transform, B6_inv_transform, B9_to_B6, B6_to_B9
 
     
 
@@ -15,7 +14,9 @@ def lattice_loss(model,
                  b: torch.Tensor,
                  device,
                  lengths_mult,
-                 angles_mult):
+                 angles_mult,
+                 gradient):
+    ## gradient: function from basis6, edge vector to gradient of length wrt basis6
     x0 = torch.tensor(atoms.cart_coords, device=e.device)
     assert len(x0.shape) == 2
     #s_t = b.cumsum(dim=0).index_select(0, t)
@@ -34,11 +35,12 @@ def lattice_loss(model,
     lattice_neg[0] = -lattice_neg[0]
     lattice_neg = lattice_neg.detach()
     lattice6 = B9_to_B6(torch.tensor(atoms.lattice_mat, device=device), device=device)
-    B6_transform(lattice6)
+    lattice6 = B6_transform(lattice6)
     lattice_noise = torch.normal(torch.zeros(6, device=device))
-    lattice_noise = torch.tensor(3*[lengths_mult] + 3*[angles_mult], device=device) * lattice_noise * s_t.sqrt()
+    lattice_noise_scaled = torch.tensor(3*[lengths_mult] + 3*[angles_mult], device=device) * lattice_noise * s_t.sqrt()
     noised_lattice6 = lattice6 + lattice_noise
-    B6_inv_transform(noised_lattice6)
+    noised_transformed_lattice6 = noised_lattice6.clone()
+    noised_lattice6 = B6_inv_transform(noised_lattice6)
     noised_lattice9 = B6_to_B9(noised_lattice6, so=torch.linalg.det(lattice), device=device)
     if noised_lattice9 is None or torch.abs(torch.linalg.det(noised_lattice9)) < 1. * len(atoms.elements):
         return None
@@ -50,45 +52,19 @@ def lattice_loss(model,
                          coords=noised_atoms.frac_coords,
                          elements=atoms.elements,
                          cartesian=False)
-                         
-    L_estimate = get_output(noised_atoms, model, t, device, output_type="lattice", s_t=s_t)[2]
-    #L_estimate = torch.eye(3, device=device, dtype=lattice.dtype)
-    if L_estimate == None:
-        print("skip")
-        return None
-    L_estimate = L_estimate.to(dtype=noised_lattice9.dtype)
-    lattice_estimate = torch.matmul(noised_lattice9, L_estimate)
-    lattice_estimate6 = B9_to_B6(lattice_estimate, device=device)
-    B6_transform(lattice_estimate6)
-    return ((lattice_estimate6 - lattice6) / s_t.sqrt()).square().mean()
     
-    
-    #lattice_estimate = noised_lattice9.to(dtype=L_estimate.dtype)
-    #lattice_estimate = torch.matmul(noised_lattice9.to(dtype=L_estimate.dtype), L_estimate)
-    #m = lattice_estimate
-    #print(torch.dot(m[0], m[0]))
-    #print(torch.dot(m[0], m[1]))
-    #print(torch.dot(m[0], m[2])) 
-    #print(torch.dot(m[1], m[1]))
-    #print(torch.dot(m[1], m[2]))
-    #print(torch.dot(m[2], m[2]))
-    #m = lattice
-    #print(torch.dot(m[0], m[0]))
-    #print(torch.dot(m[0], m[1]))
-    #print(torch.dot(m[0], m[2])) 
-    #print(torch.dot(m[1], m[1]))
-    #print(torch.dot(m[1], m[2]))
-    #print(torch.dot(m[2], m[2]))
-    #P = get_isometry(lattice, lattice_estimate, device=device)[1].detach()
-    #P_neg = get_isometry(lattice_neg, lattice_estimate, device=device)[1].detach()
-    #adjusted_estimate = torch.matmul(lattice_estimate, P)
-    #adjusted_estimate_neg = torch.matmul(lattice_estimate, P_neg)
-    #loss = (lattice - adjusted_estimate).square().mean()
-    #loss_neg = (lattice_neg - adjusted_estimate_neg).square().mean()
-    #print(loss, loss_neg)
-    #if loss < loss_neg:
-    #    return loss
-    #return loss_neg
+    noise_estimate = get_output(noised_atoms, model, t, device, output_type="lattice", b6=noised_transformed_lattice6, gradient=gradient, emax=50)[2]
+    #noise_estimate = torch.zeros(6, device=device)
+                        
+    #L_estimate = get_output(noised_atoms, model, t, device, output_type="lattice", gradient=gradient)[2]
+    #if L_estimate == None:
+    #    print("skip")
+    #    return None
+    #L_estimate = L_estimate.to(dtype=noised_lattice9.dtype)
+    #lattice_estimate = torch.matmul(noised_lattice9, L_estimate)
+    #lattice_estimate6 = B9_to_B6(lattice_estimate, device=device)
+    #B6_transform(lattice_estimate6)
+    return (noise_estimate - lattice_noise).square().mean()
     
 
 def noise_estimation_loss(model,

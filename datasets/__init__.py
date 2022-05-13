@@ -17,7 +17,11 @@ class AtomsData(Dataset):
         return self.size
     
     def __getitem__(self, idx):
-        atoms = Atoms.from_cif(os.path.join(self.folder, self.files[idx]), use_cif2cell=False)
+        try:
+            atoms = Atoms.from_cif(os.path.join(self.folder, self.files[idx]), use_cif2cell=False)
+        except Exception as exp:
+            print(os.path.join(self.folder, self.files[idx]))
+            print(exp)
         #graph.ndata['coord'] = torch.from_numpy(atoms.cart_coords)
         return atoms
 

@@ -1,9 +1,8 @@
 import torch
-from functions.atomic import return_to_lattice, get_output, B6_transform, B6_inv_transform
+from functions.atomic import return_to_lattice, get_output, B6_transform, B6_inv_transform, get_sampling_coords, B9_to_B6, B6_to_B9
 from jarvis.core.atoms import Atoms
 import numpy as np
 from collections import Counter
-from functions.isometry import B9_to_B6, B6_to_B9
 
 def compute_st(b, t):
     return b.cumsum(dim=0).index_select(0, t.long()).view(-1, 1)
@@ -25,24 +24,24 @@ def remove_atom(atoms, fake_probabilities, mult, softmax_l=20.):
                      cartesian = True)
     return atoms
     
-def lattice_step(atoms, sigma, step, t, model, device, n=5):
-    lattice = np.zeros((6,))
-    for i in range(5):
-        score = None
-        while score == None:
-            score = get_output(atoms, model, t, device, output_type='lattice', s_t=sigma)[2]
-        score = score.cpu().detach().numpy()
-        z = np.random.normal(size=(6,))
-        print(B6_transform(B9_to_B6(torch.tensor(atoms.lattice_mat @ score), 'cpu')).cpu().detach().numpy() - B9_to_B6(torch.tensor(atoms.lattice_mat), 'cpu').cpu().detach().numpy())
-        lattice += 1/n * B6_transform(B9_to_B6(torch.tensor(atoms.lattice_mat @ score), 'cpu')).cpu().detach().numpy() + step * z
-    print(B6_inv_transform(torch.tensor(lattice)))
-    lattice = B6_to_B9(B6_inv_transform(torch.tensor(lattice)), 'cpu', np.linalg.det(atoms.lattice_mat)).cpu().detach().numpy()
+def lattice_step(atoms, sigma, step, t, model, device, gradient, lengths_mult, angles_mult):
+    lattice = B6_transform(B9_to_B6(torch.tensor(atoms.lattice_mat)))
+    score = None
+    while score == None:
+        score = get_output(atoms, model, t, device, output_type='lattice', b6=lattice, gradient=gradient, emax=100)[2].cpu()
+    score[:3] *= lengths_mult
+    score[3:] *= angles_mult
+    z = np.random.normal(size=(6,))
+    noise = step**0.5*z
+    print(noise, 0.5*step*score)
+    lattice = lattice - 0.5*step*score + noise
+    lattice9 = B6_to_B9(B6_inv_transform(lattice), 'cpu', np.linalg.det(atoms.lattice_mat)).cpu().detach().numpy()
     randomized_atoms = Atoms(coords = atoms.frac_coords,
-                             lattice_mat = lattice,
+                             lattice_mat = lattice9,
                              elements = atoms.elements,
                              cartesian = False)
     print("det", np.linalg.det(atoms.lattice_mat))
-    return randomized_atoms, lattice, randomized_atoms.cart_coords
+    return randomized_atoms, lattice9, randomized_atoms.cart_coords
 
 def positions_step(xt, atoms, sigma, step, t, model, device):
     z = np.random.normal(size=xt.shape)
@@ -57,17 +56,22 @@ def positions_step(xt, atoms, sigma, step, t, model, device):
                   cartesian = True)
     return atoms, xt
 
-def langevin_dynamics(x, atoms, b, model, device, T=5, epsilon=1e-6):
+@torch.no_grad()
+def langevin_dynamics(atoms, b, model, device, gradient, lengths_mult, angles_mult, T=100, epsilon=1e-6, noise_original_positions=False):
     b_iter = reversed(list(enumerate(b)))
-    #xt = x
-    xt = atoms.cart_coords
-    lattice = atoms.lattice_mat
-    result = []
+    lattice = 5.*np.random.normal(size=(3,))*np.eye(3)
+    #lattice = atoms.lattice_mat
+    atoms = Atoms(coords = atoms.frac_coords,
+                  lattice_mat = lattice,
+                  elements = atoms.elements,
+                  cartesian = False)
+    #xt = get_sampling_coords(atoms, noise_original_positions, 0.15)
+    xt = atoms.frac_coords @ lattice
+    result = [atoms]
     for t, sigma in b_iter:
-        print(t, sigma, b)
         step = epsilon * (sigma / b[0])
         step = step.cpu().detach().numpy()
-        print(step)
+        print("Time: {}, Step size: {}".format(t, step))
         randomized_atoms = Atoms(coords = xt,
                                  lattice_mat = lattice,
                                  elements = atoms.elements,
@@ -76,8 +80,8 @@ def langevin_dynamics(x, atoms, b, model, device, T=5, epsilon=1e-6):
         for i in range(T):
             t_tensor = torch.ones(1).to(device)*t
             #randomized_atoms, xt = positions_step(xt, randomized_atoms, sigma, step, t_tensor, model, device)
-            if t < 15:
-                randomized_atoms, lattice, xt = lattice_step(randomized_atoms, sigma, step, t_tensor, model, device)
+            if 18 > t > 12:
+                randomized_atoms, lattice, xt = lattice_step(randomized_atoms, sigma, step, t_tensor, model, device, gradient=gradient, lengths_mult=lengths_mult, angles_mult=angles_mult)
     result.append(randomized_atoms)
     return result, None
             

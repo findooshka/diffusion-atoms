@@ -48,13 +48,13 @@ class ALIGNNConfig(BaseSettings):
     """Hyperparameter schema for jarvisdgl.models.alignn."""
 
     name: Literal["alignn"]
-    alignn_layers: int = 4
+    alignn_layers: int = 3
     gcn_layers: int = 3
     atom_input_features: int = 92
     edge_input_features: int = 80
     triplet_input_features: int = 40
     embedding_features: int = 64
-    hidden_features: int = 64
+    hidden_features: int = 96
     # fc_layers: int = 1
     # fc_features: int = 64
     output_features: int = 1
@@ -288,35 +288,8 @@ class ALIGNN(nn.Module):
         self.atoms_layer = EdgeGatedGraphConv(config.hidden_features, config.hidden_features, config.hidden_features)
         self.atoms_readout = nn.Linear(config.hidden_features, config.output_features)
         
-        self.lattice_layer1 = ALIGNNConv(config.hidden_features, config.hidden_features, config.hidden_features)
-        self.lattice_layer2 = ALIGNNConv(config.hidden_features, config.hidden_features, config.hidden_features)
+        self.lattice_layer = ALIGNNConv(config.hidden_features, config.hidden_features, config.hidden_features)
         self.lattice_readout = nn.Linear(config.hidden_features, config.output_features)
-        
-        #self.lattice_redim_edges = MLPLayer(config.hidden_features, config.hidden_features//3)
-        #self.lattice_redim2_edges = MLPLayer(config.hidden_features//3*3, config.hidden_features)
-        #self.lattice_layer = ALIGNNConv(config.hidden_features, config.hidden_features, config.hidden_features)
-        #self.lattice_layer2 = EdgeGatedGraphConv(config.hidden_features, config.hidden_features, config.hidden_features)
-        #self.lattice_layer3 = EdgeGatedGraphConv(config.hidden_features, config.hidden_features, config.hidden_features)
-        #self.lattice_readout = nn.Linear(config.hidden_features, 6)
-        
-
-        #if self.classification:
-        #    self.fc = nn.Linear(config.hidden_features, 2)
-        #    self.softmax = nn.LogSoftmax(dim=1)
-        #else:
-        #    self.fc = nn.Linear(config.hidden_features, config.output_features)
-        #self.link = None
-        #self.link_name = config.link
-        #if config.link == "identity":
-        #    self.link = lambda x: x
-        #elif config.link == "log":
-        #    self.link = torch.exp
-        #    avg_gap = 0.7  # magic number -- average bandgap in dft_3d
-        #    self.fc.bias.data = torch.tensor(
-        #        np.log(avg_gap), dtype=torch.float
-        #    )
-        #elif config.link == "logit":
-        #    self.link = torch.sigmoid
     
     def lattice_projection(self,
                            lattice: torch.Tensor,
@@ -396,9 +369,8 @@ class ALIGNN(nn.Module):
             atoms_output = self.atoms_readout(x_atoms)
         
         if output_type == "all" or output_type == "lattice":
-            x_lattice, y_lattice, z_lattice = self.lattice_layer1(g, lg, x, y, z, t)
-            x_lattice, y_lattice, z_lattice = self.lattice_layer2(g, lg, x_lattice, y_lattice, z_lattice, t)
-            lattice_output = self.lattice_readout(z_lattice)
+            x_lattice, y_lattice, z_lattice = self.lattice_layer(g, lg, x, y, z, t)
+            lattice_output = self.lattice_readout(y_lattice)
             #lattice_output = self.lattice_output(g, lg, x, y, z, t, r, lattice)
         
         

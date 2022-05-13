@@ -34,8 +34,8 @@ diffusion:
     num_diffusion_timesteps: 20
 
 lattice_diffusion:
-    lengths_mult: 1.
-    angles_mult: 1.
+    lengths_mult: .5
+    angles_mult: .5
 
 training:
     #batch_size: 128
@@ -46,8 +46,7 @@ training:
     snapshot_freq: 1000
     validation_freq: 2000
     add_atoms_poisson_l_per_atom: 0.2  # controls the probability of atoms being added during diffusion
-    noise_lattice_mult: 0.1  # relative to atom position noise
-    lattice_loss_coef: 0.1  # lattice noise loss multiplier
+    lattice_loss_coef: 1.  # lattice noise loss multiplier
     count_loss_coef: 0.5  # atom number loss multiplier
 
 sampling:
@@ -55,16 +54,18 @@ sampling:
     n_atoms_constant: True
     n_atoms_lambda: 10.0
     remove_atom_mult: 3.0
-    ckpt_id: 11000
+    #ckpt_id: 11000
     max_t: 1000  # cap the timestep passed to the model during sampling 
     #sample_structure: "/home/arsen/data/my_data_cif_test/mp-1077918.cif"  # structure to borrow the composition/lattice from
     #sample_structure: "/home/arsen/data/my_data_cif_test/mp-1084850.cif"  # structure to borrow the composition/lattice from
     #sample_structure: "/home/arsen/data/my_data_cif_test/mp-1201721.cif"
     
     #sample_structure: "/home/arsen/data/data_stable_test/mp-189.cif" # Si Ru
-    sample_structure: "/home/arsen/data/data_stable_test/mp-706.cif" # Hg F
+    #sample_structure: "/home/arsen/data/data_stable_test/mp-706.cif" # Hg F
     #sample_structure: "/home/arsen/data/data_stable_test/mp-1205044.cif" # C N Si Gd
     #sample_structure: "/home/arsen/data/data_stable_test/mp-1205483.cif" # Tm C N
+    #sample_structure: "/home/arsen/data/data_stable_test/mp-1057.cif" # Al Ni
+    sample_structure: "/home/arsen/data/data_stable_test/mp-1078832.cif" # Zr Ga Ni
     lattice_noise: True
     lattice_noise_mult: 150.
 
