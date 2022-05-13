@@ -1,0 +1,38 @@
+# generated using pymatgen
+data_Ce2Zn3Cu7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.16757300
+_cell_length_b   5.13664700
+_cell_length_c   8.88969468
+_cell_angle_alpha   89.45465127
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Ce2Zn3Cu7
+_chemical_formula_sum   'Ce2 Zn3 Cu7'
+_cell_volume   190.29619708
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ce  Ce0  1  0.00000000  0.25142300  0.74738800  1
+  Ce  Ce1  1  0.00000000  0.74857700  0.25261200  1
+  Zn  Zn2  1  0.50000000  0.25271400  0.25293700  1
+  Zn  Zn3  1  0.50000000  0.74728600  0.74706300  1
+  Zn  Zn4  1  0.50000000  0.00000000  0.00000000  1
+  Cu  Cu5  1  0.50000000  0.50000000  0.50000000  1
+  Cu  Cu6  1  0.50000000  0.50000000  0.00000000  1
+  Cu  Cu7  1  0.50000000  0.00000000  0.50000000  1
+  Cu  Cu8  1  0.00000000  0.25384500  0.08170600  1
+  Cu  Cu9  1  0.00000000  0.75066600  0.58041500  1
+  Cu  Cu10  1  0.00000000  0.74615500  0.91829400  1
+  Cu  Cu11  1  0.00000000  0.24933400  0.41958500  1

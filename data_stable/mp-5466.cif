@@ -1,0 +1,38 @@
+# generated using pymatgen
+data_YbNbO4
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.25443287
+_cell_length_b   5.33351583
+_cell_length_c   6.61655844
+_cell_angle_alpha   113.43296064
+_cell_angle_beta   113.05526731
+_cell_angle_gamma   90.77450745
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   YbNbO4
+_chemical_formula_sum   'Yb2 Nb2 O8'
+_cell_volume   153.36631958
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  O  O0  1  0.77303928  0.96071780  0.56443864  1
+  O  O1  1  0.29139935  0.60372084  0.56443864  1
+  O  O2  1  0.22696072  0.03928220  0.43556136  1
+  O  O3  1  0.70860065  0.39627916  0.43556136  1
+  O  O4  1  0.09242695  0.27111571  0.06114996  1
+  O  O5  1  0.46872301  0.79003425  0.06114996  1
+  O  O6  1  0.90757305  0.72888429  0.93885004  1
+  O  O7  1  0.53127699  0.20996575  0.93885004  1
+  Nb  Nb8  1  0.62893481  0.87893481  0.75786961  1
+  Nb  Nb9  1  0.37106519  0.12106519  0.24213039  1
+  Yb  Yb10  1  0.12438711  0.37438711  0.74877422  1
+  Yb  Yb11  1  0.87561289  0.62561289  0.25122578  1

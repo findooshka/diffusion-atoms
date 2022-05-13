@@ -1,0 +1,37 @@
+# generated using pymatgen
+data_LiFeP2O7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.27411081
+_cell_length_b   5.27411081
+_cell_length_c   4.56605105
+_cell_angle_alpha   81.42843006
+_cell_angle_beta   81.42843006
+_cell_angle_gamma   102.43135860
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiFeP2O7
+_chemical_formula_sum   'Li1 Fe1 P2 O7'
+_cell_volume   120.47028592
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.75074300  0.24925700  0.00000000  1
+  Fe  Fe1  1  0.12638300  0.87361700  0.00000000  1
+  P  P2  1  0.25302100  0.33223600  0.40997400  1
+  P  P3  1  0.66776400  0.74697900  0.59002600  1
+  O  O4  1  0.12767800  0.53728100  0.25502800  1
+  O  O5  1  0.07275100  0.18349500  0.70984000  1
+  O  O6  1  0.34861100  0.15714200  0.19754500  1
+  O  O7  1  0.52581600  0.47418400  0.50000000  1
+  O  O8  1  0.81650500  0.92724900  0.29016000  1
+  O  O9  1  0.46271900  0.87232200  0.74497200  1
+  O  O10  1  0.84285800  0.65138900  0.80245500  1

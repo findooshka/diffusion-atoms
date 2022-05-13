@@ -1,0 +1,50 @@
+# generated using pymatgen
+data_SmHo3Ni4
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.17635700
+_cell_length_b   5.44216600
+_cell_length_c   21.32689523
+_cell_angle_alpha   83.24879008
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   SmHo3Ni4
+_chemical_formula_sum   'Sm3 Ho9 Ni12'
+_cell_volume   481.36569628
+_cell_formula_units_Z   3
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sm  Sm0  1  0.50000000  0.10400000  0.05946600  1
+  Sm  Sm1  1  0.50000000  0.10440400  0.55987300  1
+  Sm  Sm2  1  0.00000000  0.89549000  0.44020400  1
+  Ho  Ho3  1  0.00000000  0.89486500  0.94002500  1
+  Ho  Ho4  1  0.50000000  0.41747900  0.39300400  1
+  Ho  Ho5  1  0.50000000  0.41701600  0.89346700  1
+  Ho  Ho6  1  0.00000000  0.58301500  0.10677800  1
+  Ho  Ho7  1  0.00000000  0.58267900  0.60702400  1
+  Ho  Ho8  1  0.50000000  0.25721300  0.22707900  1
+  Ho  Ho9  1  0.50000000  0.25708400  0.72707700  1
+  Ho  Ho10  1  0.00000000  0.74274400  0.27277300  1
+  Ho  Ho11  1  0.00000000  0.74326900  0.77289600  1
+  Ni  Ni12  1  0.50000000  0.62054900  0.01154700  1
+  Ni  Ni13  1  0.50000000  0.61865200  0.51219000  1
+  Ni  Ni14  1  0.00000000  0.38135300  0.48782200  1
+  Ni  Ni15  1  0.00000000  0.38193200  0.98746400  1
+  Ni  Ni16  1  0.50000000  0.78774400  0.17943700  1
+  Ni  Ni17  1  0.50000000  0.78787100  0.67946800  1
+  Ni  Ni18  1  0.00000000  0.21199800  0.32058500  1
+  Ni  Ni19  1  0.00000000  0.21085400  0.82103500  1
+  Ni  Ni20  1  0.50000000  0.94894500  0.34484500  1
+  Ni  Ni21  1  0.50000000  0.94828300  0.84564800  1
+  Ni  Ni22  1  0.00000000  0.05132800  0.15514000  1
+  Ni  Ni23  1  0.00000000  0.05123100  0.65515300  1

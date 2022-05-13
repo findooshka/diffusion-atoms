@@ -1,0 +1,34 @@
+# generated using pymatgen
+data_Mg3InAg4
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   8.27767014
+_cell_length_b   8.27767014
+_cell_length_c   8.27767048
+_cell_angle_alpha   33.34226638
+_cell_angle_beta   33.34226638
+_cell_angle_gamma   33.34227030
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Mg3InAg4
+_chemical_formula_sum   'Mg3 In1 Ag4'
+_cell_volume   152.57017549
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Mg  Mg0  1  0.24915700  0.24915700  0.24915700  1
+  Mg  Mg1  1  0.75084300  0.75084300  0.75084300  1
+  Mg  Mg2  1  0.50000000  0.50000000  0.50000000  1
+  In  In3  1  0.00000000  0.00000000  0.00000000  1
+  Ag  Ag4  1  0.87342800  0.87342800  0.87342800  1
+  Ag  Ag5  1  0.37639000  0.37639000  0.37639000  1
+  Ag  Ag6  1  0.12657200  0.12657200  0.12657200  1
+  Ag  Ag7  1  0.62361000  0.62361000  0.62361000  1

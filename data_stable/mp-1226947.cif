@@ -1,0 +1,41 @@
+# generated using pymatgen
+data_Ce4Bi8Pd3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.67526100
+_cell_length_b   4.67526100
+_cell_length_c   19.20934400
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Ce4Bi8Pd3
+_chemical_formula_sum   'Ce4 Bi8 Pd3'
+_cell_volume   419.87909779
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ce  Ce0  1  0.50000000  0.00000000  0.11171600  1
+  Ce  Ce1  1  0.50000000  0.00000000  0.61629300  1
+  Ce  Ce2  1  0.00000000  0.50000000  0.88828400  1
+  Ce  Ce3  1  0.00000000  0.50000000  0.38370700  1
+  Bi  Bi4  1  0.50000000  0.00000000  0.92014300  1
+  Bi  Bi5  1  0.50000000  0.00000000  0.41253900  1
+  Bi  Bi6  1  0.00000000  0.50000000  0.07985700  1
+  Bi  Bi7  1  0.00000000  0.50000000  0.58746100  1
+  Bi  Bi8  1  0.50000000  0.50000000  0.75064000  1
+  Bi  Bi9  1  0.50000000  0.50000000  0.24936000  1
+  Bi  Bi10  1  0.00000000  0.00000000  0.75046500  1
+  Bi  Bi11  1  0.00000000  0.00000000  0.24953500  1
+  Pd  Pd12  1  0.50000000  0.50000000  0.50000000  1
+  Pd  Pd13  1  0.00000000  0.00000000  0.00000000  1
+  Pd  Pd14  1  0.00000000  0.00000000  0.50000000  1

@@ -1,0 +1,42 @@
+# generated using pymatgen
+data_Hf(GaNi4)3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.63077700
+_cell_length_b   3.63077700
+_cell_length_c   14.28428700
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Hf(GaNi4)3
+_chemical_formula_sum   'Hf1 Ga3 Ni12'
+_cell_volume   188.30320794
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Hf  Hf0  1  0.00000000  0.00000000  0.00000000  1
+  Ga  Ga1  1  0.00000000  0.00000000  0.25540100  1
+  Ga  Ga2  1  0.00000000  0.00000000  0.50000000  1
+  Ga  Ga3  1  0.00000000  0.00000000  0.74459900  1
+  Ni  Ni4  1  0.50000000  0.50000000  0.00000000  1
+  Ni  Ni5  1  0.50000000  0.50000000  0.25539700  1
+  Ni  Ni6  1  0.50000000  0.50000000  0.50000000  1
+  Ni  Ni7  1  0.50000000  0.50000000  0.74460300  1
+  Ni  Ni8  1  0.50000000  0.00000000  0.13304700  1
+  Ni  Ni9  1  0.50000000  0.00000000  0.37719700  1
+  Ni  Ni10  1  0.50000000  0.00000000  0.62280300  1
+  Ni  Ni11  1  0.50000000  0.00000000  0.86695300  1
+  Ni  Ni12  1  0.00000000  0.50000000  0.13304700  1
+  Ni  Ni13  1  0.00000000  0.50000000  0.37719700  1
+  Ni  Ni14  1  0.00000000  0.50000000  0.62280300  1
+  Ni  Ni15  1  0.00000000  0.50000000  0.86695300  1

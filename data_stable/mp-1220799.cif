@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_NbNi
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   18.00255834
+_cell_length_b   18.00255834
+_cell_length_c   18.00255859
+_cell_angle_alpha   15.65220058
+_cell_angle_beta   15.65220058
+_cell_angle_gamma   15.65219933
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   NbNi
+_chemical_formula_sum   'Nb13 Ni13'
+_cell_volume   370.08415918
+_cell_formula_units_Z   13
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Nb  Nb0  1  0.77520200  0.77520200  0.77520200  1
+  Nb  Nb1  1  0.27365100  0.27365100  0.27365100  1
+  Nb  Nb2  1  0.72634900  0.72634900  0.72634900  1
+  Nb  Nb3  1  0.22479800  0.22479800  0.22479800  1
+  Nb  Nb4  1  0.41796600  0.41796600  0.41796600  1
+  Nb  Nb5  1  0.91550000  0.91550000  0.91550000  1
+  Nb  Nb6  1  0.08450000  0.08450000  0.08450000  1
+  Nb  Nb7  1  0.58203400  0.58203400  0.58203400  1
+  Nb  Nb8  1  0.82699000  0.82699000  0.82699000  1
+  Nb  Nb9  1  0.32662800  0.32662800  0.32662800  1
+  Nb  Nb10  1  0.67337200  0.67337200  0.67337200  1
+  Nb  Nb11  1  0.17301000  0.17301000  0.17301000  1
+  Nb  Nb12  1  0.00000000  0.00000000  0.00000000  1
+  Ni  Ni13  1  0.20845200  0.20845200  0.70241200  1
+  Ni  Ni14  1  0.70418600  0.70418600  0.20371100  1
+  Ni  Ni15  1  0.70241200  0.20845200  0.20845200  1
+  Ni  Ni16  1  0.20371100  0.70418600  0.70418600  1
+  Ni  Ni17  1  0.20845200  0.70241200  0.20845200  1
+  Ni  Ni18  1  0.70418600  0.20371100  0.70418600  1
+  Ni  Ni19  1  0.29581400  0.29581400  0.79628900  1
+  Ni  Ni20  1  0.79154800  0.79154800  0.29758800  1
+  Ni  Ni21  1  0.79628900  0.29581400  0.29581400  1
+  Ni  Ni22  1  0.29758800  0.79154800  0.79154800  1
+  Ni  Ni23  1  0.29581400  0.79628900  0.29581400  1
+  Ni  Ni24  1  0.79154800  0.29758800  0.79154800  1
+  Ni  Ni25  1  0.50000000  0.50000000  0.50000000  1

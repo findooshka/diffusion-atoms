@@ -1,0 +1,37 @@
+# generated using pymatgen
+data_Er7(TePd)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   9.38288082
+_cell_length_b   9.38288082
+_cell_length_c   9.38288082
+_cell_angle_alpha   155.79419188
+_cell_angle_beta   118.19268927
+_cell_angle_gamma   67.38624994
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Er7(TePd)2
+_chemical_formula_sum   'Er7 Te2 Pd2'
+_cell_volume   296.04433265
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Er  Er0  1  0.54435000  0.12919100  0.41515900  1
+  Er  Er1  1  0.28596800  0.87080900  0.41515900  1
+  Er  Er2  1  0.93983700  0.31677100  0.62306500  1
+  Er  Er3  1  0.30629400  0.68322900  0.62306500  1
+  Er  Er4  1  0.62266100  0.35660500  0.26605600  1
+  Er  Er5  1  0.90945100  0.64339500  0.26605600  1
+  Er  Er6  1  0.00033400  0.00000000  0.00033400  1
+  Te  Te7  1  0.26328500  0.50000000  0.76328500  1
+  Te  Te8  1  0.66219800  0.00000000  0.66219800  1
+  Pd  Pd9  1  0.16567700  0.23743500  0.92824100  1
+  Pd  Pd10  1  0.69080600  0.76256500  0.92824100  1

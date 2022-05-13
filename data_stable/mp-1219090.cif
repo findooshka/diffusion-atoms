@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_SmDyNi2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.45577867
+_cell_length_b   5.45577867
+_cell_length_c   4.19503800
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   139.73292260
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   SmDyNi2
+_chemical_formula_sum   'Sm1 Dy1 Ni2'
+_cell_volume   80.70828246
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sm  Sm0  1  0.13953100  0.86046900  0.00000000  1
+  Dy  Dy1  1  0.86242500  0.13757500  0.50000000  1
+  Ni  Ni2  1  0.57184700  0.42815300  0.50000000  1
+  Ni  Ni3  1  0.42619700  0.57380300  0.00000000  1

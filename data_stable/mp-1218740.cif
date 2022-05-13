@@ -1,0 +1,46 @@
+# generated using pymatgen
+data_Sr2NbCoO6
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.63533903
+_cell_length_b   5.63609939
+_cell_length_c   9.72486671
+_cell_angle_alpha   74.66793285
+_cell_angle_beta   74.66676475
+_cell_angle_gamma   61.02418251
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Sr2NbCoO6
+_chemical_formula_sum   'Sr4 Nb2 Co2 O12'
+_cell_volume   257.16899499
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sr  Sr0  1  0.99987100  0.99990000  0.00045300  1
+  Sr  Sr1  1  0.50022300  0.50021600  0.49946800  1
+  Sr  Sr2  1  0.24978100  0.24978800  0.25053500  1
+  Sr  Sr3  1  0.75013300  0.75010300  0.74955100  1
+  Nb  Nb4  1  0.62498300  0.62498400  0.12521900  1
+  Nb  Nb5  1  0.12502800  0.12502800  0.62477400  1
+  Co  Co6  1  0.37500300  0.37500300  0.87500100  1
+  Co  Co7  1  0.87500300  0.87500300  0.37500100  1
+  O  O8  1  0.75316700  0.75319000  0.25399100  1
+  O  O9  1  0.25392800  0.25384700  0.75276200  1
+  O  O10  1  0.49606000  0.49614100  0.99724500  1
+  O  O11  1  0.99682300  0.99680000  0.49601600  1
+  O  O12  1  0.50199700  0.99557500  0.00187500  1
+  O  O13  1  0.00149400  0.49501700  0.50130200  1
+  O  O14  1  0.74852700  0.25495800  0.24869400  1
+  O  O15  1  0.24802600  0.75440200  0.74812200  1
+  O  O16  1  0.99564700  0.50200000  0.00189200  1
+  O  O17  1  0.49502600  0.00148700  0.50128300  1
+  O  O18  1  0.25495000  0.74853300  0.24871300  1
+  O  O19  1  0.75432900  0.24802400  0.74810500  1

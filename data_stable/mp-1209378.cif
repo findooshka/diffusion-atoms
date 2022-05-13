@@ -1,0 +1,36 @@
+# generated using pymatgen
+data_Pr4OsI5
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   10.27047420
+_cell_length_b   10.27047420
+_cell_length_c   9.37729425
+_cell_angle_alpha   77.28762021
+_cell_angle_beta   77.28762021
+_cell_angle_gamma   24.21572396
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Pr4OsI5
+_chemical_formula_sum   'Pr4 Os1 I5'
+_cell_volume   395.31045900
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Pr  Pr0  1  0.86052800  0.86052800  0.07219000  1
+  Pr  Pr1  1  0.13947200  0.13947200  0.92781000  1
+  Pr  Pr2  1  0.50026800  0.50026800  0.20894900  1
+  Pr  Pr3  1  0.49973200  0.49973200  0.79105100  1
+  Os  Os4  1  0.00000000  0.00000000  0.00000000  1
+  I  I5  1  0.67173000  0.67173000  0.16848000  1
+  I  I6  1  0.32827000  0.32827000  0.83152000  1
+  I  I7  1  0.66570100  0.66570100  0.66312300  1
+  I  I8  1  0.33429900  0.33429900  0.33687700  1
+  I  I9  1  0.00000000  0.00000000  0.50000000  1

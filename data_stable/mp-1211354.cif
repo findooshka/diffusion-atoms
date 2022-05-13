@@ -1,0 +1,41 @@
+# generated using pymatgen
+data_La6Al3Ni4SnRu
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   9.59139412
+_cell_length_b   9.59139412
+_cell_length_c   4.27403600
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000083
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   La6Al3Ni4SnRu
+_chemical_formula_sum   'La6 Al3 Ni4 Sn1 Ru1'
+_cell_volume   340.51188736
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  La  La0  1  0.68119200  0.84059600  0.00000000  1
+  La  La1  1  0.15940400  0.84059600  0.00000000  1
+  La  La2  1  0.15940400  0.31880800  0.00000000  1
+  La  La3  1  0.41395300  0.20697600  0.50000000  1
+  La  La4  1  0.79302400  0.20697600  0.50000000  1
+  La  La5  1  0.79302400  0.58604700  0.50000000  1
+  Al  Al6  1  0.14188500  0.57094300  0.50000000  1
+  Al  Al7  1  0.42905700  0.57094300  0.50000000  1
+  Al  Al8  1  0.42905700  0.85811500  0.50000000  1
+  Ni  Ni9  1  0.33333300  0.66666700  0.00000000  1
+  Ni  Ni10  1  0.97852500  0.48926200  0.00000000  1
+  Ni  Ni11  1  0.51073800  0.48926200  0.00000000  1
+  Ni  Ni12  1  0.51073800  0.02147500  0.00000000  1
+  Sn  Sn13  1  0.00000000  0.00000000  0.50000000  1
+  Ru  Ru14  1  0.66666700  0.33333300  0.00000000  1

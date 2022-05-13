@@ -1,0 +1,50 @@
+# generated using pymatgen
+data_Gd8MgAlNi2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   9.63804606
+_cell_length_b   9.64592563
+_cell_length_c   9.63761709
+_cell_angle_alpha   89.97712004
+_cell_angle_beta   59.58566929
+_cell_angle_gamma   119.59453376
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Gd8MgAlNi2
+_chemical_formula_sum   'Gd16 Mg2 Al2 Ni4'
+_cell_volume   633.31578147
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Gd  Gd0  1  0.69300500  0.34795600  0.95744900  1
+  Gd  Gd1  1  0.30576000  0.34812700  0.34567700  1
+  Gd  Gd2  1  0.30179000  0.95474600  0.34725300  1
+  Gd  Gd3  1  0.69808400  0.35121000  0.34836800  1
+  Gd  Gd4  1  0.37954400  0.19036200  0.81084700  1
+  Gd  Gd5  1  0.99887000  0.81003900  0.80999800  1
+  Gd  Gd6  1  0.00186600  0.18702900  0.81345900  1
+  Gd  Gd7  1  0.62016400  0.80921100  0.18785000  1
+  Gd  Gd8  1  0.00084400  0.18975500  0.18989900  1
+  Gd  Gd9  1  0.00118800  0.80704700  0.19329100  1
+  Gd  Gd10  1  0.12879900  0.56377300  0.93971900  1
+  Gd  Gd11  1  0.49592200  0.93141500  0.94048900  1
+  Gd  Gd12  1  0.49952200  0.56457200  0.93728000  1
+  Gd  Gd13  1  0.86929200  0.93073800  0.56559700  1
+  Gd  Gd14  1  0.50315300  0.56370800  0.56566800  1
+  Gd  Gd15  1  0.49904200  0.93425900  0.56549800  1
+  Mg  Mg16  1  0.84561300  0.27191200  0.57447600  1
+  Mg  Mg17  1  0.15439600  0.58075800  0.57340500  1
+  Al  Al18  1  0.15524100  0.58099200  0.26308500  1
+  Al  Al19  1  0.84617500  0.58241800  0.57200800  1
+  Ni  Ni20  1  0.28440900  0.14115400  0.57330700  1
+  Ni  Ni21  1  0.71591900  0.14252900  0.14209600  1
+  Ni  Ni22  1  0.71820800  0.57460800  0.14136900  1
+  Ni  Ni23  1  0.28319400  0.14168200  0.14191200  1

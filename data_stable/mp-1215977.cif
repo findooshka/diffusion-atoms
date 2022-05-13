@@ -1,0 +1,32 @@
+# generated using pymatgen
+data_YMg(CoNi)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.92921817
+_cell_length_b   4.92921817
+_cell_length_c   4.92921817
+_cell_angle_alpha   120.79944445
+_cell_angle_beta   119.80061362
+_cell_angle_gamma   89.48331165
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   YMg(CoNi)2
+_chemical_formula_sum   'Y1 Mg1 Co2 Ni2'
+_cell_volume   84.29159946
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Y  Y0  1  0.99892500  0.99892500  0.00000000  1
+  Mg  Mg1  1  0.25148900  0.75148900  0.50000000  1
+  Co  Co2  1  0.62399000  0.87412000  0.25013100  1
+  Co  Co3  1  0.62399000  0.37385900  0.74986900  1
+  Ni  Ni4  1  0.12820500  0.37580400  0.75240200  1
+  Ni  Ni5  1  0.62340200  0.37580400  0.24759800  1

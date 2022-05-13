@@ -1,0 +1,51 @@
+# generated using pymatgen
+data_La5Al15Cu2Au3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.36974886
+_cell_length_b   4.36974886
+_cell_length_c   27.16488134
+_cell_angle_alpha   85.38671103
+_cell_angle_beta   85.38671103
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   La5Al15Cu2Au3
+_chemical_formula_sum   'La5 Al15 Cu2 Au3'
+_cell_volume   515.33896737
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  La  La0  1  0.00120689  0.00120689  0.99758622  1
+  La  La1  1  0.40158672  0.40158672  0.19682656  1
+  La  La2  1  0.80265965  0.80265965  0.39468071  1
+  La  La3  1  0.20236718  0.20236718  0.59526564  1
+  La  La4  1  0.60238865  0.60238865  0.79522270  1
+  Al  Al5  1  0.92003920  0.92003920  0.15992160  1
+  Al  Al6  1  0.32187836  0.32187836  0.35624329  1
+  Al  Al7  1  0.72089310  0.72089310  0.55821381  1
+  Al  Al8  1  0.12073573  0.12073573  0.75852853  1
+  Al  Al9  1  0.51900750  0.51900750  0.96198500  1
+  Al  Al10  1  0.45098922  0.95098922  0.09802157  1
+  Al  Al11  1  0.85164924  0.35164924  0.29670153  1
+  Al  Al12  1  0.25003413  0.75003413  0.49993173  1
+  Al  Al13  1  0.64985733  0.14985733  0.70028534  1
+  Al  Al14  1  0.04925692  0.54925692  0.90148616  1
+  Al  Al15  1  0.95098922  0.45098922  0.09802157  1
+  Al  Al16  1  0.35164924  0.85164924  0.29670153  1
+  Al  Al17  1  0.75003413  0.25003413  0.49993173  1
+  Al  Al18  1  0.14985733  0.64985733  0.70028534  1
+  Al  Al19  1  0.54925692  0.04925692  0.90148616  1
+  Cu  Cu20  1  0.47396752  0.47396752  0.05206495  1
+  Cu  Cu21  1  0.87455623  0.87455623  0.25088754  1
+  Au  Au22  1  0.27514332  0.27514332  0.44971336  1
+  Au  Au23  1  0.67464521  0.67464521  0.65070959  1
+  Au  Au24  1  0.07435108  0.07435108  0.85129784  1

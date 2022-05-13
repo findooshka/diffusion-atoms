@@ -1,0 +1,36 @@
+# generated using pymatgen
+data_Eu2Cu4Si3Ge
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.14167400
+_cell_length_b   4.14167400
+_cell_length_c   9.90883700
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Eu2Cu4Si3Ge
+_chemical_formula_sum   'Eu2 Cu4 Si3 Ge1'
+_cell_volume   169.97087403
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Eu  Eu0  1  0.00000000  0.00000000  0.99708000  1
+  Eu  Eu1  1  0.50000000  0.50000000  0.50099800  1
+  Cu  Cu2  1  0.00000000  0.50000000  0.25650100  1
+  Cu  Cu3  1  0.50000000  0.00000000  0.74883600  1
+  Cu  Cu4  1  0.50000000  0.00000000  0.25650100  1
+  Cu  Cu5  1  0.00000000  0.50000000  0.74883600  1
+  Si  Si6  1  0.00000000  0.00000000  0.62142200  1
+  Si  Si7  1  0.00000000  0.00000000  0.37975900  1
+  Si  Si8  1  0.50000000  0.50000000  0.87136700  1
+  Ge  Ge9  1  0.50000000  0.50000000  0.11870200  1

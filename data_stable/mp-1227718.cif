@@ -1,0 +1,46 @@
+# generated using pymatgen
+data_Ca2TiRuO6
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.53273400
+_cell_length_b   5.42993400
+_cell_length_c   9.44259786
+_cell_angle_alpha   55.02292740
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Ca2TiRuO6
+_chemical_formula_sum   'Ca4 Ti2 Ru2 O12'
+_cell_volume   232.44060143
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ca  Ca0  1  0.45442900  0.75983500  0.74979000  1
+  Ca  Ca1  1  0.95442900  0.24016500  0.75021000  1
+  Ca  Ca2  1  0.54557100  0.24016500  0.25021000  1
+  Ca  Ca3  1  0.04557100  0.75983500  0.24979000  1
+  Ti  Ti4  1  0.50000000  0.50000000  0.50000000  1
+  Ti  Ti5  1  0.00000000  0.50000000  0.00000000  1
+  Ru  Ru6  1  0.50000000  0.00000000  0.00000000  1
+  Ru  Ru7  1  0.00000000  0.00000000  0.50000000  1
+  O  O8  1  0.52307900  0.33475600  0.74767600  1
+  O  O9  1  0.02307900  0.66524400  0.75232400  1
+  O  O10  1  0.47692100  0.66524400  0.25232400  1
+  O  O11  1  0.97692100  0.33475600  0.24767600  1
+  O  O12  1  0.70555600  0.16499600  0.54220500  1
+  O  O13  1  0.20555600  0.83500400  0.95779500  1
+  O  O14  1  0.28990300  0.25378900  0.04301500  1
+  O  O15  1  0.78990300  0.74621100  0.45698500  1
+  O  O16  1  0.29444400  0.83500400  0.45779500  1
+  O  O17  1  0.79444400  0.16499600  0.04220500  1
+  O  O18  1  0.71009700  0.74621100  0.95698500  1
+  O  O19  1  0.21009700  0.25378900  0.54301500  1

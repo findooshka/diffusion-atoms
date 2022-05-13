@@ -1,0 +1,37 @@
+# generated using pymatgen
+data_Re2Cl5O4
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.98084000
+_cell_length_b   6.69650685
+_cell_length_c   9.24007904
+_cell_angle_alpha   106.12463590
+_cell_angle_beta   107.85205080
+_cell_angle_gamma   93.24708076
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Re2Cl5O4
+_chemical_formula_sum   'Re2 Cl5 O4'
+_cell_volume   334.30320698
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Re  Re0  1  0.86830100  0.44452600  0.43037900  1
+  Re  Re1  1  0.98329800  0.00327400  0.99996000  1
+  Cl  Cl2  1  0.23434800  0.97756400  0.23483000  1
+  Cl  Cl3  1  0.66996000  0.11978900  0.84794100  1
+  Cl  Cl4  1  0.70616900  0.77319900  0.02103000  1
+  Cl  Cl5  1  0.19541000  0.32936600  0.06288200  1
+  Cl  Cl6  1  0.10565900  0.33995000  0.62296500  1
+  O  O7  1  0.59710000  0.46713400  0.45715700  1
+  O  O8  1  0.99047100  0.68682200  0.43620700  1
+  O  O9  1  0.82733600  0.26388000  0.24529200  1
+  O  O10  1  0.08484700  0.85099500  0.86225600  1

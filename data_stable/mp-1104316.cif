@@ -1,0 +1,40 @@
+# generated using pymatgen
+data_CeSbPt5
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   10.93312879
+_cell_length_b   10.93312879
+_cell_length_c   10.93312870
+_cell_angle_alpha   28.59005837
+_cell_angle_beta   28.59005837
+_cell_angle_gamma   28.59005978
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   CeSbPt5
+_chemical_formula_sum   'Ce2 Sb2 Pt10'
+_cell_volume   264.55023659
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ce  Ce0  1  0.50000000  0.50000000  0.50000000  1
+  Ce  Ce1  1  0.00000000  0.00000000  0.00000000  1
+  Sb  Sb2  1  0.89452900  0.89452900  0.89452900  1
+  Sb  Sb3  1  0.10547100  0.10547100  0.10547100  1
+  Pt  Pt4  1  0.07557400  0.62117400  0.52328600  1
+  Pt  Pt5  1  0.52328600  0.07557400  0.62117400  1
+  Pt  Pt6  1  0.62117400  0.52328600  0.07557400  1
+  Pt  Pt7  1  0.92442600  0.37882600  0.47671400  1
+  Pt  Pt8  1  0.47671400  0.92442600  0.37882600  1
+  Pt  Pt9  1  0.37882600  0.47671400  0.92442600  1
+  Pt  Pt10  1  0.81363300  0.81363300  0.81363300  1
+  Pt  Pt11  1  0.18636700  0.18636700  0.18636700  1
+  Pt  Pt12  1  0.66602500  0.66602500  0.66602500  1
+  Pt  Pt13  1  0.33397500  0.33397500  0.33397500  1

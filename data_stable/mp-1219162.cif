@@ -1,0 +1,49 @@
+# generated using pymatgen
+data_Sm6Ge3Se14
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   10.60102392
+_cell_length_b   10.60102392
+_cell_length_c   6.06500100
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   119.99999951
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Sm6Ge3Se14
+_chemical_formula_sum   'Sm6 Ge3 Se14'
+_cell_volume   590.27873745
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sm  Sm0  1  0.30962500  0.10673500  0.75313200  1
+  Sm  Sm1  1  0.79711100  0.69037500  0.75313200  1
+  Sm  Sm2  1  0.89326500  0.20288900  0.75313200  1
+  Sm  Sm3  1  0.02425800  0.56051800  0.25168400  1
+  Sm  Sm4  1  0.53626100  0.97574200  0.25168400  1
+  Sm  Sm5  1  0.43948200  0.46373900  0.25168400  1
+  Ge  Ge6  1  0.00000000  0.00000000  0.17165400  1
+  Ge  Ge7  1  0.33333300  0.66666700  0.66990400  1
+  Ge  Ge8  1  0.66666700  0.33333300  0.51678900  1
+  Se  Se9  1  0.00000000  0.00000000  0.55940100  1
+  Se  Se10  1  0.33333300  0.66666700  0.05788200  1
+  Se  Se11  1  0.15057800  0.23572400  0.00690800  1
+  Se  Se12  1  0.08514600  0.84942200  0.00690800  1
+  Se  Se13  1  0.76427600  0.91485400  0.00690800  1
+  Se  Se14  1  0.18280000  0.43146100  0.50481400  1
+  Se  Se15  1  0.24866100  0.81720000  0.50481400  1
+  Se  Se16  1  0.56853900  0.75133900  0.50481400  1
+  Se  Se17  1  0.40846200  0.17168500  0.27637300  1
+  Se  Se18  1  0.76322400  0.59153800  0.27637300  1
+  Se  Se19  1  0.82831500  0.23677600  0.27637300  1
+  Se  Se20  1  0.92513700  0.49775100  0.76989100  1
+  Se  Se21  1  0.57261400  0.07486300  0.76989100  1
+  Se  Se22  1  0.50224900  0.42738600  0.76989100  1

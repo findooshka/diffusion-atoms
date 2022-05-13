@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_SmErNi2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.48535186
+_cell_length_b   5.48535186
+_cell_length_c   4.25437400
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   140.07099454
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   SmErNi2
+_chemical_formula_sum   'Sm1 Er1 Ni2'
+_cell_volume   82.16181386
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sm  Sm0  1  0.85889600  0.14110400  0.50000000  1
+  Er  Er1  1  0.13748400  0.86251600  0.00000000  1
+  Ni  Ni2  1  0.42863200  0.57136800  0.00000000  1
+  Ni  Ni3  1  0.57498800  0.42501200  0.50000000  1

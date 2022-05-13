@@ -1,0 +1,37 @@
+# generated using pymatgen
+data_Y7(TeAu)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   9.48286101
+_cell_length_b   9.48286101
+_cell_length_c   9.48286101
+_cell_angle_alpha   155.19653888
+_cell_angle_beta   117.64502051
+_cell_angle_gamma   68.17676258
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Y7(TeAu)2
+_chemical_formula_sum   'Y7 Te2 Au2'
+_cell_volume   314.07505335
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Y  Y0  1  0.54140700  0.12540900  0.41599700  1
+  Y  Y1  1  0.29058800  0.87459100  0.41599700  1
+  Y  Y2  1  0.94133400  0.31641700  0.62491700  1
+  Y  Y3  1  0.30850000  0.68358300  0.62491700  1
+  Y  Y4  1  0.62237600  0.35990700  0.26246900  1
+  Y  Y5  1  0.90256200  0.64009300  0.26246900  1
+  Y  Y6  1  0.00398500  0.00000000  0.00398500  1
+  Te  Te7  1  0.26293200  0.50000000  0.76293200  1
+  Te  Te8  1  0.66407100  0.00000000  0.66407100  1
+  Au  Au9  1  0.16343600  0.23688300  0.92655200  1
+  Au  Au10  1  0.68966900  0.76311700  0.92655200  1
