@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import dgl
 from random import sample
+import logging
 
 def nearest_neighbor_edges(
         atoms=None,
@@ -21,6 +22,7 @@ def nearest_neighbor_edges(
     min_nbrs = min(len(neighborlist) for neighborlist in all_neighbors)
 
     if min_nbrs < min_neighbours + random_neighbours:
+        logging.info("Increasing cutoff")
         lat = atoms.lattice
         cutoff += 1
         return nearest_neighbor_edges(
@@ -69,9 +71,9 @@ class MyGraph(Graph):
     def atom_dgl_multigraph(
         atoms=None,
         neighbor_strategy="k-nearest",
-        cutoff=6.0,
-        min_neighbours=12,
-        random_neighbours=10,
+        cutoff=5.5,
+        min_neighbours=25,
+        random_neighbours=0,
         atom_features="cgcnn",
         max_attempts=3,
         id: Optional[str] = None,
@@ -96,19 +98,21 @@ class MyGraph(Graph):
         u, v, r = build_undirected_edgedata(atoms, edges)
 
         # build up atom attribute tensor
-        sps_features = []
-        for ii, s in enumerate(atoms.elements):
-            feat = list(get_node_attributes(s, atom_features=atom_features))
+        #sps_features = []
+        #for ii, s in enumerate(atoms.elements):
+        #    feat = list(get_node_attributes(s, atom_features=atom_features))
             # if include_prdf_angles:
             #    feat=feat+list(prdf[ii])+list(adf[ii])
-            sps_features.append(feat)
-        sps_features = np.array(sps_features)
-        node_features = torch.tensor(sps_features).type(
-            torch.get_default_dtype()
-        )
+        #    sps_features.append(feat)
+        #sps_features = np.array(sps_features)
+        #node_features = torch.tensor(sps_features).type(
+        #    torch.get_default_dtype()
+        #)
         g = dgl.graph((u, v))
-        g.ndata["atom_features"] = node_features
+        #g.ndata["atom_features"] = node_features
+        g.ndata["Z"] = torch.tensor(atoms.atomic_numbers)
         g.edata["r"] = r
+        g.edata["d"] = r.norm(dim=1)
 
         if compute_line_graph:
             # construct atomistic line graph

@@ -10,7 +10,7 @@ import torch
 import torch.utils.data as data
 import gc
 
-from models.alignn import ALIGNN
+
 #from models.ema import EMAHelper
 from functions import get_optimizer
 from functions.losses import noise_estimation_loss, lattice_loss
@@ -18,6 +18,8 @@ from datasets import get_dataset  #, data_transform, inverse_data_transform
 from functions.atomic import get_sampling_coords, add_random_atoms
 from jarvis.core.atoms import Atoms
 from functions.symbolic_gradient import get_gradient_func
+from models.dimenet_pp import DimeNetPP
+from models.initializers import GlorotOrthogonal
 
 import torchvision.utils as tvu
 
@@ -97,24 +99,10 @@ class Diffusion(object):
             beta_end=config.diffusion.beta_end,
             num_diffusion_timesteps=config.diffusion.num_diffusion_timesteps,
         )
-        self.s_T = betas.sum()
-        print("s_T: ", self.s_T)
         betas = self.betas = torch.from_numpy(betas).float().to(self.device)
         self.num_timesteps = betas.shape[0]
         self.gradient_func = get_gradient_func()
-
-        #alphas = 1.0 - betas
-        #alphas_cumprod = alphas.cumprod(dim=0)
-        #alphas_cumprod_prev = torch.cat(
-        #    [torch.ones(1).to(device), alphas_cumprod[:-1]], dim=0
-        #)
-        #posterior_variance = (
-        #    betas * (1.0 - alphas_cumprod_prev) / (1.0 - alphas_cumprod)
-        #)
-        #if self.model_var_type == "fixedlarge":
-        #    self.logvar = betas.log()
-        #elif self.model_var_type == "fixedsmall":
-        #    self.logvar = posterior_variance.clamp(min=1e-20).log()
+        #os.system(f"mount -o remount,size={config.data.shared_memory_size} /dev/shm")
 
     def train(self):
         torch.autograd.set_detect_anomaly(True)
@@ -127,11 +115,24 @@ class Diffusion(object):
             shuffle=True,
             num_workers=config.data.num_workers,
         )
-        model = ALIGNN()
+        model = DimeNetPP(emb_size=config.model.emb_size,
+                          out_emb_size=config.model.out_emb_size,
+                          int_emb_size=config.model.int_emb_size,
+                          basis_emb_size=config.model.basis_emb_size,
+                          num_blocks=config.model.num_blocks,
+                          num_spherical=config.model.num_spherical,
+                          num_radial=config.model.num_radial,
+                          cutoff=config.model.cutoff,
+                          envelope_exponent=config.model.envelope_exponent,
+                          num_before_skip=config.model.num_before_skip,
+                          num_after_skip=config.model.num_after_skip,
+                          num_dense_output=config.model.num_dense_output,
+                          extensive=config.model.extensive,
+                          output_init=GlorotOrthogonal).to(self.device)
         
         
-        loss_ema = [0]
-        batch_loss = 0.
+        loss_history = []
+        batch_loss = np.array([0., 0.])
 
         model = model.to(self.device)
         model = torch.nn.DataParallel(model)
@@ -149,6 +150,7 @@ class Diffusion(object):
             states = torch.load(os.path.join(self.args.log_path, "ckpt.pth"))
             model.load_state_dict(states[0])
 
+            loss_history = list(np.load(os.path.join(self.args.log_path, "loss.npy")))
             states[1]["param_groups"][0]["eps"] = self.config.optim.eps
             optimizer.load_state_dict(states[1])
             start_epoch = states[2]
@@ -159,38 +161,36 @@ class Diffusion(object):
         bs = self.config.training.batch_size
         
         for epoch in range(start_epoch, self.config.training.n_epochs):
-            data_start = time.time()
-            data_time = 0
-            for i, atoms in enumerate(train_loader):
+            time_start = time.time()
+            iteration_time = 0
+            for i, data_instance in enumerate(train_loader):
+                atoms, operations, space_group, sg_type = data_instance['atoms'], data_instance['operations'], data_instance['space_group'], data_instance['sg_type']
+                if len(atoms.elements) * len(operations) > 600:
+                    logging.warning("Skipping large structure")
+                    continue
                 #n = x.size(0)
-                data_time += time.time() - data_start
                 model.train()
                 step += 1
 
                 e = torch.randn(*atoms.cart_coords.shape, device=self.device)
                 b = self.betas
-
-                # antithetic sampling
-                #t = torch.randint(
-                #    low=0, high=self.num_timesteps, size=(n // 2 + 1,)
-                #).to(self.device)
-                #t = torch.cat([t, self.num_timesteps - t - 1], dim=0)[:n]
                 
-                t = torch.randint(
-                    low=0, high=self.num_timesteps, size=(1,)
-                ).to(self.device)
+                if step % bs == 1:
+                    optimizer.zero_grad()
+                    logging.info("zero_grad")
                 
-                loss_type = np.random.randint(2)
+                loss_type = 0 if step%bs < bs//2 else 1
                 
 
-                #if False:#loss_type == 0:
-                    #tb_logger.add_scalar("added_loss", loss, global_step=step)
-                    #logging.info(
-                    #    "step: {:.3},\t loss (atom count): \t {:.3f}, \t data time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), data_time / (i+1), float(t))
-                    #)
-                if True:#loss_type == 1:
+                if loss_type == 1:
+                    t = torch.randint(
+                        low=0, high=config.lattice_diffusion.num_diffusion_timesteps, size=(1,)
+                    ).to(self.device)
                     loss = lattice_loss(model,
                                         atoms,
+                                        operations,
+                                        space_group,
+                                        sg_type,
                                         t,
                                         e,
                                         b,
@@ -198,45 +198,48 @@ class Diffusion(object):
                                         lengths_mult=self.config.lattice_diffusion.lengths_mult,
                                         angles_mult=self.config.lattice_diffusion.angles_mult,
                                         gradient=self.gradient_func)
-                    if loss is None:
+                    if loss is None or torch.isnan(loss):
                         step -= 1
                         continue
                     loss *= self.config.training.lattice_loss_coef
                     tb_logger.add_scalar("lattice_loss", loss, global_step=step)
+                    iteration_time = time.time() - time_start
                     logging.info(
-                        "step: {:.3},\t loss (lattice): \t {:.3f}, \t data time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), data_time / (i+1), float(t))
+                        "step: {:.3},\t loss (lattice): \t {:.3f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
                     )
-                elif len(atoms.elements) > 1:
+                else:
+                    t = torch.randint(
+                        low=0, high=self.num_timesteps, size=(1,)
+                    ).to(self.device)
                     loss = noise_estimation_loss(model,
                                                  atoms,
+                                                 operations,
+                                                 space_group,
+                                                 sg_type,
                                                  t,
                                                  e,
                                                  b,
-                                                 self.device)
+                                                 self.device,
+                                                 gradient=self.gradient_func)
                     tb_logger.add_scalar("loss", loss, global_step=step)
+                    iteration_time = time.time() - time_start
                     logging.info(
-                        "step: {:.3},\t loss (positions): \t {:.3f}, \t data time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), data_time / (i+1), float(t))
+                        "step: {:.3},\t loss (positions): \t {:.3f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
                     )
-                else:
-                    print("one atom structure, skipping")
-                    continue
 
-                if step % bs == 0:
-                    optimizer.zero_grad()
+                
                 
                 
                 (loss / bs).backward()
-                batch_loss += loss.item() / bs
+                batch_loss[loss_type] += loss.item() / bs
                 del loss
                 
-                #for obj in gc.get_objects():
-                #    if torch.is_tensor(obj):
-                #        print(type(obj), obj.size())
-                
                 if step % bs == 0:
-                    loss_ema.append(loss_ema[-1] * 0.99 + batch_loss * 0.01)
-                    logging.info("batch_loss: {}, loss_ema: {}".format(batch_loss, loss_ema[-1]))
-                    batch_loss = 0.
+                    batch_loss = 2 * np.array(batch_loss)
+                    loss_history.append(batch_loss)
+                    loss_100_average = np.mean(loss_history[max(0, len(loss_history)-100):], axis=0)
+                    logging.info("batch_loss: {}, loss_100_average: {}".format(batch_loss, loss_100_average))
+                    batch_loss = np.array([0., 0.])
                     try:
                         torch.nn.utils.clip_grad_norm_(
                             model.parameters(), config.optim.grad_clip
@@ -245,9 +248,7 @@ class Diffusion(object):
                         pass
                     optimizer.step()
 
-                #if self.config.model.ema:
-                #    ema_helper.update(model)
-
+               
                 if step % bs == 0 and (step // bs) % self.config.training.snapshot_freq == 0 or step == 1:
                     states = [
                         model.state_dict(),
@@ -255,20 +256,30 @@ class Diffusion(object):
                         epoch,
                         step
                     ]
-                    #if self.config.model.ema:
-                    #    states.append(ema_helper.state_dict())
-                    print(os.path.join(self.args.log_path, "loss_ema"))
-                    np.save(os.path.join(self.args.log_path, "loss_ema"), loss_ema)
+                    np.save(os.path.join(self.args.log_path, "loss"), loss_history)
                     torch.save(
                         states,
                         os.path.join(self.args.log_path, "ckpt_{}.pth".format(step // bs)),
                     )
                     torch.save(states, os.path.join(self.args.log_path, "ckpt.pth"))
-
-                data_start = time.time()
+                time_start = time.time()
 
     def sample(self):
-        model = ALIGNN()
+        config = self.config
+        model = DimeNetPP(emb_size=config.model.emb_size,
+                          out_emb_size=config.model.out_emb_size,
+                          int_emb_size=config.model.int_emb_size,
+                          basis_emb_size=config.model.basis_emb_size,
+                          num_blocks=config.model.num_blocks,
+                          num_spherical=config.model.num_spherical,
+                          num_radial=config.model.num_radial,
+                          cutoff=config.model.cutoff,
+                          envelope_exponent=config.model.envelope_exponent,
+                          num_before_skip=config.model.num_before_skip,
+                          num_after_skip=config.model.num_after_skip,
+                          num_dense_output=config.model.num_dense_output,
+                          extensive=config.model.extensive,
+                          output_init=GlorotOrthogonal).to(self.device)
 
         if getattr(self.config.sampling, "ckpt_id", None) is None:
             states = torch.load(
@@ -288,54 +299,36 @@ class Diffusion(object):
 
         model.eval()
 
-        if self.args.fid:
-            self.sample_fid(model)
-        elif self.args.interpolation:
-            self.sample_interpolation(model)
-        elif self.args.sequence:
+        if self.args.count == 1:
             self.sample_sequence(model)
         else:
-            raise NotImplementedError("Sample procedeure not defined")
+            for i in range(1, self.args.count+1):
+                self.sample_sequence(model, i)
 
-    def sample_fid(self, model):
+    def sample_multiple(self, model):
         config = self.config
-        img_id = len(glob.glob(f"{self.args.image_folder}/*"))
-        print(f"starting from image {img_id}")
-        total_n_samples = 50000
-        n_rounds = (total_n_samples - img_id) // config.sampling.batch_size
 
-        with torch.no_grad():
-            for _ in tqdm.tqdm(
-                range(n_rounds), desc="Generating image samples for FID evaluation."
-            ):
-                n = config.sampling.batch_size
-                x = torch.randn(
-                    n,
-                    config.data.channels,
-                    config.data.image_size,
-                    config.data.image_size,
-                    device=self.device,
-                )
-
-                x = self.sample_image(x, model)
-                x = inverse_data_transform(config, x)
-
-                for i in range(n):
-                    tvu.save_image(
-                        x[i], os.path.join(self.args.image_folder, f"{img_id}.png")
-                    )
-                    img_id += 1
-
-    def sample_sequence(self, model):
+    def sample_sequence(self, model, index=None):
         config = self.config
+        if index is not None:
+            folder = os.path.join(self.args.image_folder, str(index))
+        else:
+            folder = self.args.image_folder
      
-        atoms = Atoms.from_cif(self.config.sampling.sample_structure)
+        composition = []
+        for element in config.sampling.composition_dict:
+            composition += config.sampling.composition_dict[element] * [element]
+        atoms = Atoms(coords = 3*np.random.normal(size=(len(composition), 3)),
+                      lattice_mat = 3*np.random.normal(size=(3,3)),
+                      elements = composition,
+                      cartesian=True)
+        #atoms = Atoms.from_cif(self.config.sampling.sample_structure)
         #atoms = Atoms(coords = 3*np.random.normal(size=(17, 3)),
         #          lattice_mat = 3*np.random.normal(size=(3,3)),
         #          elements = ['H']*12 + ['Li']*2 + ['B']*3,
         #          cartesian=True)
     
-        atoms.write_cif(os.path.join(self.args.image_folder, f"0_original.cif"), with_spg_info=False)
+        atoms.write_cif(os.path.join(folder, f"0_original.cif"), with_spg_info=False)
         if not config.sampling.n_atoms_constant:
             atoms, _ = add_random_atoms(atoms, config.sampling.n_atoms_lambda, scale_with_natoms=False)
         
@@ -350,7 +343,7 @@ class Diffusion(object):
         #x = [inverse_data_transform(config, y) for y in x]
 
         for i in range(len(atoms_seq)):
-            atoms_seq[i].write_cif(os.path.join(self.args.image_folder, f"{i}.cif"), with_spg_info=False)
+            atoms_seq[i].write_cif(os.path.join(folder, f"{i}.cif"), with_spg_info=False)
             #for j in range(x[i].size(0)):
                 #tvu.save_image(
                 #    x[i][j], os.path.join(self.args.image_folder, f"{j}_{i}.png")
@@ -420,7 +413,7 @@ class Diffusion(object):
                 raise NotImplementedError
             from functions.denoising import generalized_steps, langevin_dynamics
 
-            x = langevin_dynamics(atoms, self.betas, model, self.device, gradient=self.gradient_func,
+            x = langevin_dynamics(atoms, self.config.sampling.phonopy_file, self.betas, model, self.device, gradient=self.gradient_func,
                                   lengths_mult=self.config.lattice_diffusion.lengths_mult,
                                   angles_mult=self.config.lattice_diffusion.angles_mult,
                                   noise_original_positions=self.args.noise_original)
@@ -447,7 +440,20 @@ class Diffusion(object):
             num_workers=config.data.num_workers,
         )
         
-        model = ALIGNN()
+        model = DimeNetPP(emb_size=config.model.emb_size,
+                          out_emb_size=config.model.out_emb_size,
+                          int_emb_size=config.model.int_emb_size,
+                          basis_emb_size=config.model.basis_emb_size,
+                          num_blocks=config.model.num_blocks,
+                          num_spherical=config.model.num_spherical,
+                          num_radial=config.model.num_radial,
+                          cutoff=config.model.cutoff,
+                          envelope_exponent=config.model.envelope_exponent,
+                          num_before_skip=config.model.num_before_skip,
+                          num_after_skip=config.model.num_after_skip,
+                          num_dense_output=config.model.num_dense_output,
+                          extensive=config.model.extensive,
+                          output_init=GlorotOrthogonal).to(self.device)
         model = model.to(self.device)
         
         model = torch.nn.DataParallel(model)
@@ -456,15 +462,14 @@ class Diffusion(object):
         
         
         for name in os.listdir(self.args.log_path):
-            if name.find("5000.pth") < 0 and name.find("0000.pth") < 0:
+            if name.find("000.pth") < 0:
                 continue
             states = torch.load(os.path.join(self.args.log_path, name))
             print(name)
             model.load_state_dict(states[0])
 
             model.eval()
-            loss = 0.
-            iterations = 0
+            loss = ([], [])
             
             for atoms in tqdm.tqdm(test_loader):
                 for j in range(config.test.noise_rolls):
@@ -476,7 +481,6 @@ class Diffusion(object):
                             low=config.test.timestep_min, high=config.test.timestep_max+1, size=(1,)
                         ).to(self.device)
                 
-                        #loss += float(noise_estimation_loss(model,
                         #                                    atoms,
                         #                                    t,
                         #                                    e,
@@ -488,15 +492,23 @@ class Diffusion(object):
                         #                                    1.,
                         #                                    0.,
                         #                                    0.))
-                        to_add = lattice_loss(model, atoms, t, e, b,
-                                              self.device,
-                                              lengths_mult=self.config.lattice_diffusion.lengths_mult,
-                                              angles_mult=self.config.lattice_diffusion.angles_mult,
-                                              gradient=self.gradient_func)
-                        if to_add is not None:
-                            iterations += 1
-                            loss += to_add.item()
-            results[name] = loss / iterations
+                        to_add = (   
+                                     noise_estimation_loss(model,
+                                                           atoms,
+                                                           t,
+                                                           e,
+                                                           b,
+                                                           self.device),
+                                     lattice_loss(model, atoms, t, e, b,
+                                                  self.device,
+                                                  lengths_mult=self.config.lattice_diffusion.lengths_mult,
+                                                  angles_mult=self.config.lattice_diffusion.angles_mult,
+                                                  gradient=self.gradient_func),
+                                 )
+                        loss[0].append(to_add[0].item())
+                        if to_add[1] is not None:
+                            loss[1].append(to_add[1].item())
+            results[name] = (np.mean(loss[0]), np.mean(loss[1]))
         with open(os.path.join(self.args.log_path, "test_loss_t_from_" + str(config.test.timestep_min) + "_to_" + str(config.test.timestep_max) + "_rolls_" + str(config.test.noise_rolls) + ".txt"), 'w') as f:
             json.dump(results, f)
         

@@ -8,6 +8,8 @@ from functions.graph import MyGraph
 from jarvis.core.atoms import Atoms
 from random import sample, shuffle
 from joblib import Parallel, delayed
+from datasets.symmetries import get_equiv, apply_operations_atoms
+from functions.lattice import degrees_of_freedom, get_noise_mask, get_lattice_system, c_to_p
 #import time
 
 
@@ -78,9 +80,10 @@ def B6_to_B9(B6, device='cpu', so=1.):
     result[2, 1] = b_21
     x = B6[2].square() - b_20.square() - b_21.square()
     if x > 0:
-        result[2, 2] = torch.sqrt(x)
         if torch.linalg.det(result) * so < 0:
-            result[0, 0] = -B6[0]
+            result[2, 2] = -torch.sqrt(x)
+        else:
+            result[2, 2] = torch.sqrt(x)
         
         return result
     print('oh')
@@ -88,7 +91,68 @@ def B6_to_B9(B6, device='cpu', so=1.):
     #    result = torch.zeros((3,3), device=device)
     #    penalty = penalty_mult * (1-x) / B6[2].square()
     return None
-    
+
+def equal(a, b, eps=1e-3):
+    return np.abs(a-b) < eps
+
+def get_permutation(lattice_system, lattice):
+    b6 = B9_to_B6(torch.tensor(lattice))
+    if lattice_system == 'triclinic':
+        return (0, 1, 2)
+    elif lattice_system == 'monoclinic':
+        if equal(b6[3], b6[4]):
+            return (0, 1, 2)
+        elif equal(b6[3], b6[5]):
+            return (0, 2, 1)
+        elif equal(b6[4], b6[5]):
+            return (1, 2, 0)
+        else:
+            raise ValueError("Invalid lattice")
+    elif lattice_system == 'orthorhombic':
+        assert (equal(b6[3], np.pi/2)
+                    and equal(b6[4], np.pi/2)
+                    and equal(b6[5], np.pi/2))
+        return (0, 1, 2)
+    elif lattice_system == 'tetragonal':
+        assert (equal(b6[3], np.pi/2)
+                    and equal(b6[4], np.pi/2)
+                    and equal(b6[5], np.pi/2))
+        if equal(b6[0], b6[1]):
+            return (0, 1, 2)
+        elif equal(b6[0], b6[2]):
+            return (0, 2, 1)
+        elif equal(b6[1], b6[2]):
+            return (1, 2, 0)
+        else:
+            raise ValueError("Invalid lattice")
+    elif lattice_system == 'hexagonal':
+        if equal(b6[0], b6[1]):
+            assert (equal(b6[3], np.pi/2)
+                    and equal(b6[4], np.pi/2)
+                    and equal(b6[5], 2*np.pi/3))
+            return (0, 1, 2)
+        elif equal(b6[0], b6[2]):
+            assert (equal(b6[3], np.pi/2)
+                    and equal(b6[5], np.pi/2)
+                    and equal(b6[4], 2*np.pi/3))
+            return (0, 2, 1)
+        elif equal(b6[1], b6[2]):
+            assert (equal(b6[4], np.pi/2)
+                    and equal(b6[5], np.pi/2)
+                    and equal(b6[3], 2*np.pi/3))
+            return (1, 2, 0)
+        else:
+            raise ValueError("Invalid lattice")
+    elif lattice_system == 'cubic':
+        assert (equal(b6[0], b6[1])
+                    and equal(b6[0], b6[2])
+                    and equal(b6[3], np.pi/2)
+                    and equal(b6[4], np.pi/2)
+                    and equal(b6[5], np.pi/2))
+        return (0, 1, 2)
+    else:
+        raise ValueError(f"Invalid lattice system: {lattice_system}")
+
 def get_b6_grad(b6, e, device='cpu'):
     if torch.is_tensor(b6):
         b6 = b6.detach()
@@ -191,21 +255,22 @@ def get_L_inv_estimate(graph, line_graph, edge_movement, device, s_t, p=3, max_d
     L = torch.matmul(XXX, Y)
     return L
     
-def worker(job_b, job_v, gradient):
-    result = np.empty((job_v.shape[0], 6))
+def worker(job_b, job_v, space_group, gradient):
+    result = np.empty((job_v.shape[0], degrees_of_freedom(space_group)))
     for i in range(job_v.shape[0]):
-        result[i] = gradient(job_b, job_v[i]).squeeze(1)
+        result[i] = gradient(job_b, job_v[i], space_group).squeeze(1)
     return result
 
-def compute_gradients(b6, v, gradient, n_jobs=10):
+def compute_gradients(b6, v, space_group, gradient, n_jobs=10):
     n = v.shape[0]
     p = n//n_jobs
     ids = list(range(n))
     bounds = [ids[p*i:min(p*(i+1), n)] for i in range(int(np.ceil(n/p)))]
-    result = np.vstack(Parallel(n_jobs=n_jobs)(delayed(worker)(b6, v[bound], gradient) for bound in bounds))
+    result = np.vstack(Parallel(n_jobs=n_jobs)(delayed(worker)(b6, v[bound], space_group, gradient) for bound in bounds))
+    #result = np.vstack((worker(b6, v[bound], space_group, gradient) for bound in bounds))
     return result    
 
-def mean_gradient_estimate(graph, b6, edge_movement, lattice, gradient, device, emax):
+def gradient_estimate(graph, space_group, b6, lattice, gradient, device, emax):
     inv_lattice = np.linalg.inv(lattice)
     r_numpy = graph.edata['r'].cpu().detach().numpy()
     b6_numpy = b6.cpu().detach().numpy()
@@ -213,9 +278,10 @@ def mean_gradient_estimate(graph, b6, edge_movement, lattice, gradient, device, 
         index = sample(list(range(r_numpy.shape[0])), emax)
         r_numpy = r_numpy[index]
         edge_movement = edge_movement[index]
+    #print(np.abs(edge_movement.cpu().detach().numpy()).max())
     stability = 0.001
-    #gradients = compute_gradients(b6_numpy, stability * r_numpy @ inv_lattice, gradient)
-    gradients = np.array([gradient(b6_numpy, stability * r_numpy[i] @ inv_lattice) for i in range(r_numpy.shape[0])]).squeeze(2)
+    gradients = compute_gradients(b6_numpy, stability * r_numpy @ inv_lattice, space_group, gradient)
+    #gradients = np.array([gradient(b6_numpy, stability * r_numpy[i] @ inv_lattice) for i in range(r_numpy.shape[0])]).squeeze(2)
     #gradients = [get_b6_grad(b6_numpy, stability * r_numpy[i] @ inv_lattice, device) for i in range(r_numpy.shape[0])]#.squeeze(2)
     #print(gradient(b6_numpy, stability * r_numpy[0] @ inv_lattice), get_b6_grad(b6_numpy, stability * r_numpy[0] @ inv_lattice))
     #data_start = time.time()
@@ -233,38 +299,46 @@ def mean_gradient_estimate(graph, b6, edge_movement, lattice, gradient, device, 
     #gradients = torch.stack(gradients)
     gradients = torch.tensor(gradients, device=device)
     gradients /= stability
-    #if torch.isnan(gradients).any:
-    #    print("b6: ", b6)
-    result = edge_movement * gradients / gradients.square().sum(dim=1, keepdim=True)
-    #print(result.mean(dim=0))
-    #print("b6: ", b6)
-    return result.mean(dim=0)
+    #result = edge_movement * gradients / gradients.square().sum(dim=1, keepdim=True)
+    #return result.mean(dim=0)
+    return gradients / gradients.square().sum(dim=1, keepdim=True)
     
 
-def get_graphs(atoms, device):
-    graph, line_graph = MyGraph.atom_dgl_multigraph(atoms, min_neighbours=12, random_neighbours=8)
+def get_graphs(atoms, operations, device, t, lattice_system, sg_type):
+    atoms = c_to_p(atoms, sg_type, lattice_system)
+    atoms, equiv = apply_operations_atoms(atoms, operations)
+    graph, line_graph = MyGraph.atom_dgl_multigraph(atoms, min_neighbours=16, random_neighbours=6)
     graph, line_graph = graph.to(device=device), line_graph.to(device=device)
+    graph.ndata['step'] = t * torch.ones([graph.number_of_nodes(),], device=device, dtype=torch.int)
+    graph.edata['equiv'] = get_equiv(equiv, graph, device)
     return graph, line_graph
 
-def get_output(noised_atoms, model, t, device, b6=None, gradient=None, output_type='all', emax=50):
-    graph, line_graph = get_graphs(noised_atoms, device)
-    lattice = torch.from_numpy(noised_atoms.lattice_mat).to(device).float()
-    eps_edge, fake_probabilities, eps_lattice = model(graph, line_graph, lattice, t, output_type=output_type)
-    #assert fake_probabilities.shape == (graph.nodes().shape[0], 1)
-    #assert eps_edge.shape == (graph.edges()[0].shape[0], 1)
-    eps_atoms = None
+def get_output(noised_atoms, operations, space_group, sg_type, model, t, device, gradient, output_type='all', emax=50):
+    b6 = B6_transform(B9_to_B6(torch.tensor(noised_atoms.lattice_mat, device=device), device=device))
+    b9 = noised_atoms.lattice_mat
+    lattice_system = get_lattice_system(space_group)
+    noise_mask = get_noise_mask(lattice_system, device=device)
+    graph, line_graph = get_graphs(noised_atoms, operations, device, t, lattice_system, sg_type)
+    gradient_mat = gradient_estimate(graph,
+                                     space_group,
+                                     b6,
+                                     b9,
+                                     gradient,
+                                     device=device,
+                                     emax=-1).to(dtype=noise_mask.dtype)
+    graph.edata['gradient_mat'] = gradient_mat@noise_mask.T
+    output = model(graph, line_graph)
+    eps_atoms, eps_lattice = None, None
     if output_type == 'all' or output_type == 'edges':
-        eps_atoms = _get_eps(eps_edge, graph)
+        eps_atoms = _get_eps(output[:,0].unsqueeze(-1), graph)
+        eps_atoms = eps_atoms[:eps_atoms.shape[0]//len(operations)]
     if output_type == 'all' or output_type == 'lattice':
-        #eps_lattice = _get_eps(eps_lattice, line_graph, True)
-        #line_graph.edata['r'] = line_graph.ndata['r'].index_select(0, line_graph.edges()[1])
-        #eps_lattice = get_L_inv_estimate(graph, line_graph, eps_lattice, device=device, s_t=s_t)
-        eps_lattice = mean_gradient_estimate(graph, b6, eps_lattice,
-                                             noised_atoms.lattice_mat,
-                                             gradient,
-                                             device=device,
-                                             emax=emax)
-    return eps_atoms, fake_probabilities, eps_lattice
+        #cart_r = graph.edata['r']
+        #cart_diff = (cart_r).norm(dim=1).to(dtype=b6.dtype) - (cart_r.to(dtype=b6.dtype)@L.to(dtype=b6.dtype)).norm(dim=1)
+        
+        eps_lattice = (output[:,1].unsqueeze(-1) * gradient_mat).mean(axis=0)
+        #eps_lattice = (cart_diff.unsqueeze(-1) * gradient_mat).mean(axis=0)
+    return eps_atoms, eps_lattice
     
 def return_to_lattice(x, lattice):
     relative = x @ np.linalg.inv(lattice)

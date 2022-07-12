@@ -47,8 +47,7 @@ def parse_args_and_config():
         action="store_true",
         help="Whether to produce samples from the model",
     )
-    parser.add_argument("--fid", action="store_true")
-    parser.add_argument("--interpolation", action="store_true")
+    parser.add_argument("--count", type=int, default=1, help="Structures to sample")
     parser.add_argument(
         "--resume_training", action="store_true", help="Whether to resume training"
     )
@@ -91,7 +90,6 @@ def parse_args_and_config():
         default=0.0,
         help="eta used to control the variances of sigma",
     )
-    parser.add_argument("--sequence", action="store_true")
 
     args = parser.parse_args()
     args.log_path = os.path.join(args.exp, "logs", args.doc)
@@ -174,23 +172,26 @@ def parse_args_and_config():
             if not os.path.exists(args.image_folder):
                 os.makedirs(args.image_folder)
             else:
-                if not (args.fid or args.interpolation):
-                    overwrite = False
-                    if args.ni:
+                overwrite = False
+                if args.ni:
+                    overwrite = True
+                else:
+                    response = input(
+                        f"Image folder {args.image_folder} already exists. Overwrite? (Y/N)"
+                    )
+                    if response.upper() == "Y":
                         overwrite = True
-                    else:
-                        response = input(
-                            f"Image folder {args.image_folder} already exists. Overwrite? (Y/N)"
-                        )
-                        if response.upper() == "Y":
-                            overwrite = True
-
-                    if overwrite:
-                        shutil.rmtree(args.image_folder)
-                        os.makedirs(args.image_folder)
-                    else:
-                        print("Output image folder exists. Program halted.")
-                        sys.exit(0)
+                if overwrite:
+                    shutil.rmtree(args.image_folder)
+                    os.makedirs(args.image_folder)
+                else:
+                    print("Output image folder exists. Program halted.")
+                    sys.exit(0)
+            if args.count > 1:
+                for i in range(1, args.count+1):
+                    current_dir = os.path.join(args.image_folder, str(i))
+                    if not os.path.exists(current_dir):
+                        os.makedirs(current_dir)
 
     # add device
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -211,7 +212,7 @@ def parse_args_and_config():
 def dict2namespace(config):
     namespace = argparse.Namespace()
     for key, value in config.items():
-        if isinstance(value, dict):
+        if isinstance(value, dict) and not '_dict' in key:
             new_value = dict2namespace(value)
         else:
             new_value = value
