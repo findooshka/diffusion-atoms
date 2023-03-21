@@ -24,8 +24,10 @@ def get_operations(filename):
         i += 5
     sg_type = output[1].split()[-1][1]
     space_group = int(output[2].split()[-1])
+    #return operations, 1, 'P'
     return operations, space_group, sg_type
-    #return [(np.eye(3), np.zeros(3))], 1
+    #return [(np.eye(3), np.zeros(3))], space_group, sg_type
+    #return [(np.eye(3), np.zeros(3))], 1, 'P'
     
 def apply_operation(operation, frac_coords):
     return ((operation[0]@frac_coords.T).T + operation[1]) % 1

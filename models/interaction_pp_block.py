@@ -18,9 +18,9 @@ class InteractionPPBlock(nn.Module):
         super(InteractionPPBlock, self).__init__()
 
         self.activation = activation
-        self.dense_gradient1 = nn.Linear(6, int_emb_size, bias=False)
-        self.dense_gradient2 = nn.Linear(int_emb_size, int_emb_size)
-        self.dense_gradient3 = nn.Linear(int_emb_size, int_emb_size)
+        #self.dense_gradient1 = nn.Linear(6, int_emb_size, bias=False)
+        #self.dense_gradient2 = nn.Linear(int_emb_size, int_emb_size)
+        #self.dense_gradient3 = nn.Linear(int_emb_size, int_emb_size)
         # Transformations of Bessel and spherical basis representations
         self.dense_rbf1 = nn.Linear(num_radial, basis_emb_size, bias=False)
         self.dense_rbf2 = nn.Linear(basis_emb_size, emb_size, bias=False)
@@ -71,15 +71,15 @@ class InteractionPPBlock(nn.Module):
         if self.activation is not None:
             x_kj = self.activation(x_kj)
         
-        gradient = self.dense_gradient1(edges.data['gradient_mat'])
-        gradient = gradient * x_kj
-        gradient = self.dense_gradient2(gradient)
-        if self.activation is not None:
-            gradient = self.activation(gradient)
-        gradient = self.dense_gradient3(gradient)
-        if self.activation is not None:
-            gradient = self.activation(gradient)
-        x_kj = x_kj + gradient
+        #gradient = self.dense_gradient1(edges.data['gradient_mat'])
+        #gradient = gradient * x_kj
+        #gradient = self.dense_gradient2(gradient)
+        #if self.activation is not None:
+        #    gradient = self.activation(gradient)
+        #gradient = self.dense_gradient3(gradient)
+        #if self.activation is not None:
+        #    gradient = self.activation(gradient)
+        #x_kj = x_kj + gradient
         
         return {'x_kj': x_kj, 'x_ji': x_ji}
 

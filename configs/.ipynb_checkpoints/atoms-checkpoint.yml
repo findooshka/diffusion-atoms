@@ -1,18 +1,21 @@
 data:
-    data: "../data_stable"
-    data_test: "../data_stable_test"
-    image_size: 32
-    channels: 3
-    logit_transform: false
-    uniform_dequantization: false
-    gaussian_dequantization: false
-    random_flip: true
-    rescaled: true
-    num_workers: 4
+    #data: "/home/arsen/data/data_conventional"
+    #data: "/home/arsen/data/data_stable"
+    data: "/opt/app-root/src/data_primitive_train"
+    data_test: "/opt/app-root/src/data_primitive_test"
+    #data_test: "/home/arsen/data/data_stable_test"
+    #phonopy: "/home/arsen/data/phonopy_conventional"
+    phonopy: "/opt/app-root/src/phonopy_primitive"
+    space_groups: "/opt/app-root/src/space_groups"
+    elements_coef: "/opt/app-root/src/element_loss_coef_special.npy"
+    num_workers: 1
 
 model:
+  #emb_size: 128
+  #out_emb_size: 128
+  #int_emb_size: 64
   emb_size: 64
-  out_emb_size: 128
+  out_emb_size: 64
   int_emb_size: 32
   basis_emb_size: 8
   num_blocks: 4
@@ -24,29 +27,28 @@ model:
   num_before_skip: 1
   num_after_skip: 2
   num_dense_output: 3
-  # ['mu', 'alpha', 'homo', 'lumo', 'gap', 'r2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv']
-  targets: ['mu']
 
 diffusion:
     #beta_schedule: linear
     #beta_start: 0.0001
     #beta_end: 0.02
     beta_schedule: log
-    beta_start: 0.0001
-    beta_end: 100.
-    num_diffusion_timesteps: 20
+    beta_start: 0.001
+    beta_end: 4.
+    num_diffusion_timesteps: 10
 
 lattice_diffusion:
-    lengths_mult: .5
-    angles_mult: .5
+    beta_schedule: log
+    beta_start: 0.1
+    beta_end: 16.
+    num_diffusion_timesteps: 10
 
 training:
     #batch_size: 128
     batch_size: 32
-    gamma: 0.1 # regularization factor, defines loss at "two lattices away"
     n_epochs: 10000
     n_iters: 5000000
-    snapshot_freq: 1000
+    snapshot_freq: 500
     validation_freq: 2000
     add_atoms_poisson_l_per_atom: 0.2  # controls the probability of atoms being added during diffusion
     lattice_loss_coef: 1.  # lattice noise loss multiplier
@@ -63,17 +65,15 @@ sampling:
     #sample_structure: "/home/arsen/data/my_data_cif_test/mp-1084850.cif"  # structure to borrow the composition/lattice from
     #sample_structure: "/home/arsen/data/my_data_cif_test/mp-1201721.cif"
     
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-189.cif" # Si Ru
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-706.cif" # Hg F
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-1205044.cif" # C N Si Gd
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-1205483.cif" # Tm C N
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-718.cif" # Pd Sn
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-1057.cif" # Al Ni
-    #sample_structure: "/home/arsen/data/data_stable_test/mp-1078832.cif" # Zr Ga Ni
+    space_group: 62
+    from_file: False
+    random_positions: True
+    random_lattice: True
+    sample_structure: "../data_primitive_test/mp-5788.cif"
     composition_dict:
-        Li: 4
-        B: 4
-        H: 16
+        Na: 1
+        U: 1
+        O: 2
     lattice_noise: True
     lattice_noise_mult: 150.
 

@@ -7,7 +7,6 @@ import sys
 import os
 import torch
 import numpy as np
-import torch.utils.tensorboard as tb
 
 from runners.diffusion import Diffusion
 
@@ -21,18 +20,12 @@ def parse_args_and_config():
         "--config", type=str, required=True, help="Path to the config file"
     )
     parser.add_argument("--seed", type=int, default=1234, help="Random seed")
-    parser.add_argument(
-        "--exp", type=str, default="exp", help="Path for saving running related data."
-    )
+    parser.add_argument("--log", type=bool, default=False, help="Whether to log the output in a text file during training")
     parser.add_argument(
         "--doc",
         type=str,
         required=True,
-        help="A string for documentation purpose. "
-        "Will be the name of the log folder.",
-    )
-    parser.add_argument(
-        "--comment", type=str, default="", help="A string for experiment comment"
+        help="Name of the new/trained model to train/sample from",
     )
     parser.add_argument(
         "--verbose",
@@ -41,7 +34,6 @@ def parse_args_and_config():
         help="Verbose level: info | debug | warning | critical",
     )
     parser.add_argument("--evaluate", action="store_true", help="Whether to evaluate the model test loss")
-    parser.add_argument("--test", action="store_true", help="Whether to test the model")
     parser.add_argument(
         "--sample",
         action="store_true",
@@ -51,29 +43,15 @@ def parse_args_and_config():
     parser.add_argument(
         "--resume_training", action="store_true", help="Whether to resume training"
     )
-    #parser.add_argument(
-    #    "-i",
-    #    "--image_folder",
-    #    type=str,
-    #    default="cif",
-    #    help="The folder name of samples",
-    #)
     parser.add_argument(
         "--ni",
         action="store_true",
         help="No interaction. Suitable for Slurm Job launcher",
     )
     parser.add_argument(
-        "--sample_type",
+        "--sampling_order_path",
         type=str,
-        default="generalized",
-        help="sampling approach (generalized or ddpm_noisy)",
-    )
-    parser.add_argument(
-        "--skip_type",
-        type=str,
-        default="uniform",
-        help="skip according to (uniform or quadratic)",
+        help="Sampling order file name",
     )
     parser.add_argument(
         "--noise_original",
@@ -81,27 +59,16 @@ def parse_args_and_config():
         default=False,
         help="noise original structure instead of completely random init"
     )
-    parser.add_argument(
-        "--timesteps", type=int, default=1000, help="number of steps involved"
-    )
-    parser.add_argument(
-        "--eta",
-        type=float,
-        default=0.0,
-        help="eta used to control the variances of sigma",
-    )
 
     args = parser.parse_args()
-    args.log_path = os.path.join(args.exp, "logs", args.doc)
+    args.log_path = os.path.join("exp", "logs", args.doc)
 
     # parse config file
     with open(os.path.join("configs", args.config), "r") as f:
         config = yaml.safe_load(f)
     new_config = dict2namespace(config)
 
-    tb_path = os.path.join(args.exp, "tensorboard", args.doc)
-
-    if not args.test and not args.sample and not args.evaluate:
+    if not args.sample and not args.evaluate:
         if not args.resume_training:
             if os.path.exists(args.log_path):
                 overwrite = False
@@ -114,10 +81,7 @@ def parse_args_and_config():
 
                 if overwrite:
                     shutil.rmtree(args.log_path)
-                    shutil.rmtree(tb_path)
                     os.makedirs(args.log_path)
-                    if os.path.exists(tb_path):
-                        shutil.rmtree(tb_path)
                 else:
                     print("Folder exists. Program halted.")
                     sys.exit(0)
@@ -127,25 +91,25 @@ def parse_args_and_config():
             with open(os.path.join(args.log_path, "config.yml"), "w") as f:
                 yaml.dump(new_config, f, default_flow_style=False)
 
-        new_config.tb_logger = tb.SummaryWriter(log_dir=tb_path)
         # setup logger
         level = getattr(logging, args.verbose.upper(), None)
         if not isinstance(level, int):
             raise ValueError("level {} not supported".format(args.verbose))
 
         handler1 = logging.StreamHandler()
-        handler2 = logging.FileHandler(os.path.join(args.log_path, "stdout.txt"))
         formatter = logging.Formatter(
             "%(levelname)s - %(filename)s - %(asctime)s - %(message)s"
         )
-        handler1.setFormatter(formatter)
-        handler2.setFormatter(formatter)
         logger = logging.getLogger()
+        handler1.setFormatter(formatter)
         logger.addHandler(handler1)
-        logger.addHandler(handler2)
+        if args.log:
+            handler2 = logging.FileHandler(os.path.join(args.log_path, "stdout.txt"))
+            handler2.setFormatter(formatter)
+            logger.addHandler(handler2)
         logger.setLevel(level)
 
-    elif not args.evaluate:
+    elif args.sample:
         level = getattr(logging, args.verbose.upper(), None)
         if not isinstance(level, int):
             raise ValueError("level {} not supported".format(args.verbose))
@@ -158,40 +122,63 @@ def parse_args_and_config():
         logger = logging.getLogger()
         logger.addHandler(handler1)
         logger.setLevel(level)
+        
+        if not hasattr(args, 'sampling_order_path'):
+            raise RuntimeError("No sampling order path is given")
+        with open(os.path.join("sampling_orders", args.sampling_order_path), "r") as f:
+            sampling_order = yaml.safe_load(f)
 
-        if args.sample:
-            os.makedirs(os.path.join(args.exp, "cif_samples"), exist_ok=True)
-            args.image_folder = os.path.join(
-                args.exp, "cif_samples", args.doc
-            )
-            if not os.path.exists(args.image_folder):
-                os.makedirs(args.image_folder)
-            args.image_folder = os.path.join(
-                args.image_folder, str(args.seed)
-            )
-            if not os.path.exists(args.image_folder):
-                os.makedirs(args.image_folder)
-            else:
-                overwrite = False
-                if args.ni:
-                    overwrite = True
+        new_config.sampling_order = []
+        os.makedirs(os.path.join("exp", "cif_samples"), exist_ok=True)
+        os.makedirs(os.path.join("exp", "cif_samples", args.doc), exist_ok=True)
+        os.makedirs(os.path.join("exp", "cif_samples", args.doc, sampling_order['name']), exist_ok=True)
+        for order in sampling_order['orders']:
+            if type(order['space_group']) is int:
+                order['space_group'] = [order['space_group']]
+            for space_group in order['space_group']:
+                new_config.sampling_order.append(argparse.Namespace())
+                composition_name = ["".join((element[0], str(element[1]))) for element in zip(order['composition'].keys(), order['composition'].values())]
+                composition_name = "".join(composition_name)
+                image_folder = composition_name + '_' + str(space_group)
+                image_folder = os.path.join(
+                    "exp", "cif_samples", args.doc, sampling_order['name'], image_folder
+                )
+                if not os.path.exists(image_folder):
+                    os.makedirs(image_folder)
                 else:
-                    response = input(
-                        f"Image folder {args.image_folder} already exists. Overwrite? (Y/N)"
-                    )
-                    if response.upper() == "Y":
-                        overwrite = True
-                if overwrite:
-                    shutil.rmtree(args.image_folder)
-                    os.makedirs(args.image_folder)
+                    overwrite = args.ni
+                    if not overwrite:
+                        response = input(
+                            f"Image folder {image_folder} already exists. Overwrite? (Y/N)"
+                        )
+                        if response.upper() == "Y":
+                            overwrite = True
+                    if overwrite:
+                        shutil.rmtree(image_folder)
+                        os.makedirs(image_folder)
+                    else:
+                        print("Output image folder exists. Program halted.")
+                        sys.exit(0)
+                for i in range(1, order['count']+1):
+                    os.makedirs(os.path.join(image_folder, str(i)), exist_ok=True)
+                new_config.sampling_order[-1].image_folder = image_folder
+                new_config.sampling_order[-1].composition = order['composition']
+                new_config.sampling_order[-1].space_group = space_group
+                new_config.sampling_order[-1].random_lattice = order['random_lattice']
+                new_config.sampling_order[-1].random_positions = order['random_positions']
+                new_config.sampling_order[-1].count = order['count']
+                new_config.sampling_order[-1].T = order['T']
+                if 'template' in order:
+                    new_config.sampling_order[-1].template = order['template']
                 else:
-                    print("Output image folder exists. Program halted.")
-                    sys.exit(0)
-            if args.count > 1:
+                    if not order['random_lattice'] or not order['random_positions']:
+                        raise RuntimeError("Invalid order given, not template structure for fixed lattice/positions")
                 for i in range(1, args.count+1):
-                    current_dir = os.path.join(args.image_folder, str(i))
-                    if not os.path.exists(current_dir):
-                        os.makedirs(current_dir)
+                    current_dir = os.path.join(image_folder, str(i))
+                    os.makedirs(current_dir, exist_ok=True)
+                finals_dir = os.path.join(image_folder, "finals")
+                os.makedirs(finals_dir, exist_ok=True)
+                new_config.sampling_order[-1].finals_dir = finals_dir
 
     # add device
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -224,14 +211,11 @@ def main():
     args, config = parse_args_and_config()
     logging.info("Writing log file to {}".format(args.log_path))
     logging.info("Exp instance id = {}".format(os.getpid()))
-    logging.info("Exp comment = {}".format(args.comment))
 
     try:
         runner = Diffusion(args, config)
         if args.sample:
             runner.sample()
-        elif args.test:
-            pass#runner.test()
         elif args.evaluate:
             runner.test()
         else:

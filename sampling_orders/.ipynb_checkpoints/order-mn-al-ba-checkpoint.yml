@@ -1,0 +1,193 @@
+name: "sampling_MnAlBa"
+orders:
+    - config: "atoms_quasistable.yml"
+      space_group: 225
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 15
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 221
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 15
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 216
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 15
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 227
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 198
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 223
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 205
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 229
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 230
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 204
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 10
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 220
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 5
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 217
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 5
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 218
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 5
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 206
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 5
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 212
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 5
+      T: 60
+      
+    - config: "atoms_quasistable.yml"
+      space_group: 200
+      random_positions: True
+      random_lattice: True
+      composition:
+        Mn: 1
+        Ba: 1
+        Al: 1
+      #template: "../data_primitive_test/mp-5788.cif"
+      count: 5
+      T: 60

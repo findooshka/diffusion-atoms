@@ -1,0 +1,69 @@
+data:
+    data: "/opt/app-root/src/data_quasistable_primitive"
+    #data: "/opt/app-root/src/data_primitive_train"
+    #data_test: "/opt/app-root/src/data_primitive_test"
+    data_test: "/opt/app-root/src/data_test"
+    #phonopy: "/home/arsen/data/phonopy_conventional"
+    #phonopy: "/opt/app-root/src/phonopy_quasistable"
+    space_groups: "/opt/app-root/src/space_groups"
+    sg_index: "/opt/app-root/src/sg_index.json"
+    elements_coef: "/opt/app-root/src/element_loss_coef_special.npy"
+    num_workers: 1
+
+model:
+  #emb_size: 128
+  #out_emb_size: 128
+  #int_emb_size: 64
+  emb_size: 64
+  out_emb_size: 64
+  int_emb_size: 32
+  basis_emb_size: 8
+  num_blocks: 4
+  num_spherical: 7
+  num_radial: 6
+  envelope_exponent: 5
+  cutoff: 5.0
+  extensive: True
+  num_before_skip: 1
+  num_after_skip: 2
+  num_dense_output: 3
+
+diffusion:
+    #beta_schedule: linear
+    #beta_start: 0.0001
+    #beta_end: 0.02
+    beta_schedule: log
+    beta_start: 0.001
+    beta_end: 4.
+    num_diffusion_timesteps: 10
+
+lattice_diffusion:
+    beta_schedule: log
+    beta_start: 0.1
+    beta_end: 16.
+    num_diffusion_timesteps: 10
+
+training:
+    #batch_size: 128
+    batch_size: 32
+    n_epochs: 10000
+    n_iters: 5000000
+    snapshot_freq: 500
+    validation_freq: 2000
+    add_atoms_poisson_l_per_atom: 0.2  # controls the probability of atoms being added during diffusion
+    lattice_loss_coef: 1.  # lattice noise loss multiplier
+    count_loss_coef: 0.5  # atom number loss multiplier
+
+optim:
+    weight_decay: 0.000
+    optimizer: "Adam"
+    lr: 0.0002
+    beta1: 0.9
+    amsgrad: false
+    eps: 0.00000001
+    grad_clip: 1.0
+    
+test:
+    noise_rolls: 1
+    timestep_min: 0
+    timestep_max: 19

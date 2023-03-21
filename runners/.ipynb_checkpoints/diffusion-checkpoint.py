@@ -13,9 +13,12 @@ import gc
 
 #from models.ema import EMAHelper
 from functions import get_optimizer
-from functions.losses import noise_estimation_loss, lattice_loss
+from functions.losses import noise_estimation_loss, lattice_loss, elements_loss
 from datasets import get_dataset  #, data_transform, inverse_data_transform
+from datasets.symmetries import get_operations, reduce_atoms
 from functions.atomic import get_sampling_coords, add_random_atoms
+from functions.lattice import get_lattice_system, p_to_c
+from functions.denoising import langevin_dynamics
 from jarvis.core.atoms import Atoms
 from functions.symbolic_gradient import get_gradient_func
 from models.dimenet_pp import DimeNetPP
@@ -99,24 +102,20 @@ class Diffusion(object):
             beta_end=config.diffusion.beta_end,
             num_diffusion_timesteps=config.diffusion.num_diffusion_timesteps,
         )
-        self.s_T = betas.sum()
-        print("s_T: ", self.s_T)
-        betas = self.betas = torch.from_numpy(betas).float().to(self.device)
-        self.num_timesteps = betas.shape[0]
+        self.betas = torch.from_numpy(betas).float().to(self.device)
+        self.num_timesteps = config.diffusion.num_diffusion_timesteps
+        
+        lattice_betas = get_beta_schedule(
+            beta_schedule=config.lattice_diffusion.beta_schedule,
+            beta_start=config.lattice_diffusion.beta_start,
+            beta_end=config.lattice_diffusion.beta_end,
+            num_diffusion_timesteps=config.lattice_diffusion.num_diffusion_timesteps,
+        )
+        self.lattice_betas = torch.from_numpy(lattice_betas).float().to(self.device)
+        self.lattice_num_timesteps = config.lattice_diffusion.num_diffusion_timesteps
+        
         self.gradient_func = get_gradient_func()
-
-        #alphas = 1.0 - betas
-        #alphas_cumprod = alphas.cumprod(dim=0)
-        #alphas_cumprod_prev = torch.cat(
-        #    [torch.ones(1).to(device), alphas_cumprod[:-1]], dim=0
-        #)
-        #posterior_variance = (
-        #    betas * (1.0 - alphas_cumprod_prev) / (1.0 - alphas_cumprod)
-        #)
-        #if self.model_var_type == "fixedlarge":
-        #    self.logvar = betas.log()
-        #elif self.model_var_type == "fixedsmall":
-        #    self.logvar = posterior_variance.clamp(min=1e-20).log()
+        self.element_loss_coef = np.load(config.data.elements_coef)
 
     def train(self):
         torch.autograd.set_detect_anomaly(True)
@@ -145,8 +144,9 @@ class Diffusion(object):
                           output_init=GlorotOrthogonal).to(self.device)
         
         
-        loss_ema = [0]
-        batch_loss = 0.
+        loss_history = []
+        #batch_loss = np.array([0., 0., 0.])
+        batch_loss = np.array([0., 0.])
 
         model = model.to(self.device)
         model = torch.nn.DataParallel(model)
@@ -164,7 +164,7 @@ class Diffusion(object):
             states = torch.load(os.path.join(self.args.log_path, "ckpt.pth"))
             model.load_state_dict(states[0])
 
-            loss_ema = list(np.load(os.path.join(self.args.log_path, "loss_ema.npy")))
+            loss_history = list(np.load(os.path.join(self.args.log_path, "loss.npy")))
             states[1]["param_groups"][0]["eps"] = self.config.optim.eps
             optimizer.load_state_dict(states[1])
             start_epoch = states[2]
@@ -175,82 +175,114 @@ class Diffusion(object):
         bs = self.config.training.batch_size
         
         for epoch in range(start_epoch, self.config.training.n_epochs):
-            data_start = time.time()
-            data_time = 0
-            for i, atoms in enumerate(train_loader):
+            time_start = time.time()
+            iteration_time = 0
+            for i, data_instance in enumerate(train_loader):
+                atoms, operations, space_group, sg_type = data_instance['atoms'], data_instance['operations'], data_instance['space_group'], data_instance['sg_type']
+                if get_lattice_system(space_group) == 'monoclinic' or get_lattice_system(space_group) == 'triclinic':
+                    continue
+                #if get_lattice_system(space_group) != 'monoclinic':
+                #    continue
+                if len(atoms.elements) * len(operations) > 500:
+                    logging.warning("Skipping large structure")
+                    continue
                 #n = x.size(0)
-                data_time += time.time() - data_start
                 model.train()
                 step += 1
 
-                e = torch.randn(*atoms.cart_coords.shape, device=self.device)
-                b = self.betas
-
-                # antithetic sampling
-                #t = torch.randint(
-                #    low=0, high=self.num_timesteps, size=(n // 2 + 1,)
-                #).to(self.device)
-                #t = torch.cat([t, self.num_timesteps - t - 1], dim=0)[:n]
                 
+                b = self.betas
+                lattice_b = self.lattice_betas
+                
+                if step % bs == 1:
+                    optimizer.zero_grad()
+                    logging.info("zero_grad")
+                
+                t = torch.randint(
+                    low=0, high=config.lattice_diffusion.num_diffusion_timesteps, size=(1,)
+                ).to(self.device)
+                loss = lattice_loss(model,
+                                    atoms,
+                                    operations,
+                                    space_group,
+                                    sg_type,
+                                    t,
+                                    b,
+                                    lattice_b,
+                                    self.device,
+                                    gradient=self.gradient_func)
+                if not (loss is None or torch.isnan(loss)):
+                    loss *= self.config.training.lattice_loss_coef
+                    tb_logger.add_scalar("lattice_loss", loss, global_step=step)
+                    iteration_time = time.time() - time_start
+                    logging.info(
+                        "step: {:.3},\t loss (lattice): \t {:.3f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
+                    )
+                    (0.5 * loss / bs).backward()
+                    batch_loss[1] += loss.item() / bs
+                    del loss
+                else:
+                    logging.info("Bad lattice / noise, setting loss to 1, skipping the structure")
+                    batch_loss[1] += 1. / bs
+                    if loss is not None:
+                        del loss
+                    
+                ############
                 t = torch.randint(
                     low=0, high=self.num_timesteps, size=(1,)
                 ).to(self.device)
-                
-                loss_type = np.random.randint(2)
-                
-
-                #if False:#loss_type == 0:
-                    #tb_logger.add_scalar("added_loss", loss, global_step=step)
-                    #logging.info(
-                    #    "step: {:.3},\t loss (atom count): \t {:.3f}, \t data time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), data_time / (i+1), float(t))
-                    #)
-                if loss_type == 1:
-                    loss = lattice_loss(model,
-                                        atoms,
-                                        t,
-                                        e,
-                                        b,
-                                        self.device,
-                                        lengths_mult=self.config.lattice_diffusion.lengths_mult,
-                                        angles_mult=self.config.lattice_diffusion.angles_mult,
-                                        gradient=self.gradient_func)
-                    if loss is None:
-                        step -= 1
-                        continue
-                    loss *= self.config.training.lattice_loss_coef
-                    tb_logger.add_scalar("lattice_loss", loss, global_step=step)
-                    logging.info(
-                        "step: {:.3},\t loss (lattice): \t {:.3f}, \t data time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), data_time / (i+1), float(t))
-                    )
-                else:
-                    loss = noise_estimation_loss(model,
-                                                 atoms,
-                                                 t,
-                                                 e,
-                                                 b,
-                                                 self.device)
-                    tb_logger.add_scalar("loss", loss, global_step=step)
-                    logging.info(
-                        "step: {:.3},\t loss (positions): \t {:.3f}, \t data time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), data_time / (i+1), float(t))
-                    )
-
-                if step % bs == 1:
-                    optimizer.zero_grad()
-                    print("zero_grad")
-                
-                
-                (loss / bs).backward()
-                batch_loss += loss.item() / bs
+                loss = noise_estimation_loss(model,
+                                             atoms,
+                                             operations,
+                                             space_group,
+                                             sg_type,
+                                             t,
+                                             b,
+                                             self.device,
+                                             gradient=self.gradient_func)
+                tb_logger.add_scalar("loss", loss, global_step=step)
+                iteration_time = time.time() - time_start
+                logging.info(
+                    "step: {:.3},\t loss (positions): \t {:.3f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
+                )
+                (0.5 * loss / bs).backward()
+                batch_loss[0] += loss.item() / bs
                 del loss
-                
-                #for obj in gc.get_objects():
-                #    if torch.is_tensor(obj):
-                #        print(type(obj), obj.size())
+
+                ###########
+                #t = torch.randint(
+                #    low=0, high=self.num_timesteps, size=(1,)
+                #).to(self.device)
+                #loss = elements_loss(model,
+                #                     atoms,
+                #                     operations,
+                #                     space_group,
+                #                     sg_type,
+                #                     t,
+                #                     b,
+                #                     lattice_b,
+                #                     self.element_loss_coef,
+                #                     self.device)
+                #if not (loss is None or torch.isnan(loss)):
+                #    tb_logger.add_scalar("loss", loss, global_step=step)
+                #    iteration_time = time.time() - time_start
+                #    logging.info(
+                #        "step: {:.3},\t loss (elements): \t {:.6f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
+                #    )
+
+                #    (0.33 * loss / bs).backward()
+                #    batch_loss[2] += loss.item() / bs
+                #    del loss
+                #else:
+                #    logging.info("Bad lattice / noise, setting loss to 1, skipping the structure")
+                #    batch_loss[2] += 1. / bs
                 
                 if step % bs == 0:
-                    loss_ema.append(loss_ema[-1] * 0.99 + batch_loss * 0.01)
-                    logging.info("batch_loss: {}, loss_ema: {}".format(batch_loss, loss_ema[-1]))
-                    batch_loss = 0.
+                    loss_history.append(batch_loss)
+                    np.save(os.path.join(self.args.log_path, "loss"), loss_history)
+                    loss_100_average = np.mean(loss_history[max(0, len(loss_history)-100):], axis=0)
+                    logging.info("batch_loss: {}, loss_100_average: {}".format(batch_loss, loss_100_average))
+                    batch_loss = [0., 0.]
                     try:
                         torch.nn.utils.clip_grad_norm_(
                             model.parameters(), config.optim.grad_clip
@@ -259,9 +291,7 @@ class Diffusion(object):
                         pass
                     optimizer.step()
 
-                #if self.config.model.ema:
-                #    ema_helper.update(model)
-
+               
                 if step % bs == 0 and (step // bs) % self.config.training.snapshot_freq == 0 or step == 1:
                     states = [
                         model.state_dict(),
@@ -269,17 +299,12 @@ class Diffusion(object):
                         epoch,
                         step
                     ]
-                    #if self.config.model.ema:
-                    #    states.append(ema_helper.state_dict())
-                    print(os.path.join(self.args.log_path, "loss_ema"))
-                    np.save(os.path.join(self.args.log_path, "loss_ema"), loss_ema)
                     torch.save(
                         states,
                         os.path.join(self.args.log_path, "ckpt_{}.pth".format(step // bs)),
                     )
                     torch.save(states, os.path.join(self.args.log_path, "ckpt.pth"))
-
-                data_start = time.time()
+                time_start = time.time()
 
     def sample(self):
         config = self.config
@@ -298,151 +323,85 @@ class Diffusion(object):
                           extensive=config.model.extensive,
                           output_init=GlorotOrthogonal).to(self.device)
 
-        if getattr(self.config.sampling, "ckpt_id", None) is None:
-            states = torch.load(
-                os.path.join(self.args.log_path, "ckpt.pth"),
-                map_location=self.config.device,
-            )
-        else:
-            states = torch.load(
-               os.path.join(
-                    self.args.log_path, f"ckpt_{self.config.sampling.ckpt_id}.pth"
-                ),
-                map_location=self.config.device,
-            )
+        #if getattr(self.config.sampling, "ckpt_id", None) is None:
+        states = torch.load(
+            os.path.join(self.args.log_path, "ckpt.pth"),
+            map_location=self.config.device,
+        )
+        #else:
+        #    states = torch.load(
+        #       os.path.join(
+        #            self.args.log_path, f"ckpt_{self.config.sampling.ckpt_id}.pth"
+        #        ),
+        #        map_location=self.config.device,
+        #    )
         model = model.to(self.device)
         model = torch.nn.DataParallel(model)
         model.load_state_dict(states[0], strict=True)
 
         model.eval()
 
-        if self.args.count == 1:
-            self.sample_sequence(model)
-        else:
-            for i in range(1, self.args.count+1):
-                self.sample_sequence(model, i)
+        for order in config.sampling_order:
+            for i in range(1, order.count+1):
+                self.sample_sequence(model, order, i)
 
-    def sample_multiple(self, model):
+    def sample_sequence(self, model, order, index=None):
         config = self.config
-
-    def sample_sequence(self, model, index=None):
-        config = self.config
-        if index is not None:
-            folder = os.path.join(self.args.image_folder, str(index))
+        folder = os.path.join(order.image_folder, str(index))
+        space_group = order.space_group
+        operations, _, sg_type = get_operations(os.path.join(self.config.data.space_groups, str(space_group)))
+        lattice_system = get_lattice_system(space_group)
+        if hasattr(order, 'template'):
+            atoms = Atoms.from_cif(order.template, use_cif2cell=False, get_primitive_atoms=False)
+            atoms, _ = reduce_atoms(atoms, operations)
+            atoms = p_to_c(atoms, sg_type, lattice_system)
         else:
-            folder = self.args.image_folder
-     
-        composition = []
-        for element in config.sampling.composition_dict:
-            composition += config.sampling.composition_dict[element] * [element]
-        atoms = Atoms(coords = 3*np.random.normal(size=(len(composition), 3)),
-                      lattice_mat = 3*np.random.normal(size=(3,3)),
-                      elements = composition,
-                      cartesian=True)
-        #atoms = Atoms.from_cif(self.config.sampling.sample_structure)
-        #atoms = Atoms(coords = 3*np.random.normal(size=(17, 3)),
-        #          lattice_mat = 3*np.random.normal(size=(3,3)),
-        #          elements = ['H']*12 + ['Li']*2 + ['B']*3,
-        #          cartesian=True)
+            composition = []
+            for element in order.composition:
+                composition += order.composition[element] * [element]
+            atoms = Atoms(coords = np.ones((len(composition), 3)),
+                          lattice_mat = np.eye(3),
+                          elements = composition,
+                          cartesian=True)
     
         atoms.write_cif(os.path.join(folder, f"0_original.cif"), with_spg_info=False)
-        if not config.sampling.n_atoms_constant:
-            atoms, _ = add_random_atoms(atoms, config.sampling.n_atoms_lambda, scale_with_natoms=False)
         
 
         with torch.no_grad():
-            atoms_seq, x = self.sample_image(atoms, model, last=False,
-                                             remove_atoms=not config.sampling.n_atoms_constant,
-                                             remove_atoms_mult=config.sampling.remove_atom_mult*config.sampling.n_atoms_lambda/config.diffusion.num_diffusion_timesteps,
-                                             lattice_noise=config.sampling.lattice_noise,
-                                             lattice_noise_mult=config.sampling.lattice_noise_mult,)
+            atoms_seq, x = self.sample_image(atoms,
+                                             operations,
+                                             sg_type,
+                                             space_group,
+                                             model, last=False,
+                                             T=order.T,
+                                             random_positions=order.random_positions,
+                                             random_lattice=order.random_lattice,)
 
         #x = [inverse_data_transform(config, y) for y in x]
 
         for i in range(len(atoms_seq)):
             atoms_seq[i].write_cif(os.path.join(folder, f"{i}.cif"), with_spg_info=False)
+        atoms_seq[-1].write_cif(os.path.join(order.finals_dir, f"{index}.cif"), with_spg_info=False)
             #for j in range(x[i].size(0)):
                 #tvu.save_image(
                 #    x[i][j], os.path.join(self.args.image_folder, f"{j}_{i}.png")
                 #)
 
-    def sample_interpolation(self, model):
-        config = self.config
 
-        def slerp(z1, z2, alpha):
-            theta = torch.acos(torch.sum(z1 * z2) / (torch.norm(z1) * torch.norm(z2)))
-            return (
-                torch.sin((1 - alpha) * theta) / torch.sin(theta) * z1
-                + torch.sin(alpha * theta) / torch.sin(theta) * z2
-            )
-
-        z1 = torch.randn(
-            1,
-            config.data.channels,
-            config.data.image_size,
-            config.data.image_size,
-            device=self.device,
-        )
-        z2 = torch.randn(
-            1,
-            config.data.channels,
-            config.data.image_size,
-            config.data.image_size,
-            device=self.device,
-        )
-        alpha = torch.arange(0.0, 1.01, 0.1).to(z1.device)
-        z_ = []
-        for i in range(alpha.size(0)):
-            z_.append(slerp(z1, z2, alpha[i]))
-
-        x = torch.cat(z_, dim=0)
-        xs = []
-
-        # Hard coded here, modify to your preferences
-        with torch.no_grad():
-            for i in range(0, x.size(0), 8):
-                xs.append(self.sample_image(x[i : i + 8], model))
-        x = inverse_data_transform(config, torch.cat(xs, dim=0))
-        for i in range(x.size(0)):
-            tvu.save_image(x[i], os.path.join(self.args.image_folder, f"{i}.png"))
-
-    def sample_image(self, atoms, model, remove_atoms, remove_atoms_mult, lattice_noise, lattice_noise_mult, last=True):
-        try:
-            skip = self.args.skip
-        except Exception:
-            skip = 1
-        
-        if self.args.sample_type == "generalized":
-            if self.args.skip_type == "uniform":
-                #skip = self.num_timesteps // self.args.timesteps
-                #seq = range(0, self.num_timesteps, skip)
-                skip = 1#self.num_timesteps // self.args.timesteps
-                seq = range(0, self.num_timesteps, skip)
-            elif self.args.skip_type == "quad":
-                seq = (
-                    np.linspace(
-                        0, np.sqrt(self.num_timesteps * 0.8), self.args.timesteps
-                    )
-                    ** 2
-                )
-                seq = [int(s) for s in list(seq)]
-            else:
-                raise NotImplementedError
-            from functions.denoising import generalized_steps, langevin_dynamics
-
-            x = langevin_dynamics(atoms, self.betas, model, self.device, gradient=self.gradient_func,
-                                  lengths_mult=self.config.lattice_diffusion.lengths_mult,
-                                  angles_mult=self.config.lattice_diffusion.angles_mult,
-                                  noise_original_positions=self.args.noise_original)
-            #x = generalized_steps(x, atoms, seq, model, self.betas, self.device,
-            #                      eta=self.args.eta,
-            #                      max_t=self.config.sampling.max_t,
-            #                      remove_atoms=remove_atoms,
-            #                      remove_atoms_mult=remove_atoms_mult,
-            #                      lattice_noise=lattice_noise,
-            #                      lattice_noise_mult=lattice_noise_mult)
-        else:
-            raise NotImplementedError
+    def sample_image(self, atoms, operations, sg_type, space_group, model, random_positions, random_lattice, T, last=True):
+        x = langevin_dynamics(atoms,
+                              operations,
+                              sg_type,
+                              space_group,
+                              self.betas,
+                              self.lattice_betas,
+                              model,
+                              self.device,
+                              T=T,
+                              gradient=self.gradient_func,
+                              noise_original_positions=self.args.noise_original,
+                              random_positions=random_positions,
+                              random_lattice=random_lattice)
         if last:
             x = x[0][-1]
         return x

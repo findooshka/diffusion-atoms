@@ -139,6 +139,10 @@ class DimeNetPP(nn.Module):
         # Interaction blocks
         for i in range(self.num_blocks):
             g = self.interaction_blocks[i](g, l_g)
-            P += self.output_blocks[i + 1](g)
-        
+            output = self.output_blocks[i + 1](g)
+            P[0] += output[0]
+            P[1] += output[1]
+            
+        exp_nodes = torch.exp(P[1])
+        P[1] = exp_nodes / exp_nodes.sum(axis=1).reshape((-1, 1))
         return P

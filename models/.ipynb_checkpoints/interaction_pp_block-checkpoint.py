@@ -18,6 +18,9 @@ class InteractionPPBlock(nn.Module):
         super(InteractionPPBlock, self).__init__()
 
         self.activation = activation
+        #self.dense_gradient1 = nn.Linear(6, int_emb_size, bias=False)
+        #self.dense_gradient2 = nn.Linear(int_emb_size, int_emb_size)
+        #self.dense_gradient3 = nn.Linear(int_emb_size, int_emb_size)
         # Transformations of Bessel and spherical basis representations
         self.dense_rbf1 = nn.Linear(num_radial, basis_emb_size, bias=False)
         self.dense_rbf2 = nn.Linear(basis_emb_size, emb_size, bias=False)
@@ -67,6 +70,17 @@ class InteractionPPBlock(nn.Module):
         x_kj = self.down_projection(x_kj * rbf)
         if self.activation is not None:
             x_kj = self.activation(x_kj)
+        
+        #gradient = self.dense_gradient1(edges.data['gradient_mat'])
+        #gradient = gradient * x_kj
+        #gradient = self.dense_gradient2(gradient)
+        #if self.activation is not None:
+        #    gradient = self.activation(gradient)
+        #gradient = self.dense_gradient3(gradient)
+        #if self.activation is not None:
+        #    gradient = self.activation(gradient)
+        #x_kj = x_kj + gradient
+        
         return {'x_kj': x_kj, 'x_ji': x_ji}
 
     def msg_func(self, edges):
@@ -78,8 +92,6 @@ class InteractionPPBlock(nn.Module):
     def forward(self, g, l_g):
         g.apply_edges(self.edge_transfer)
         
-        # nodes correspond to edges and edges correspond to nodes in the original graphs
-        # node: d, rbf, o, rbf_env, x_kj, x_ji
         for k, v in g.edata.items():
             l_g.ndata[k] = v
 

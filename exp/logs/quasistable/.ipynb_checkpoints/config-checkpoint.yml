@@ -1,0 +1,65 @@
+!!python/object:argparse.Namespace
+data: !!python/object:argparse.Namespace
+  data: /opt/app-root/src/data_primitive_train
+  data_test: /opt/app-root/src/data_primitive_test
+  elements_coef: /opt/app-root/src/element_loss_coef.npy
+  num_workers: 1
+  phonopy: /opt/app-root/src/phonopy_primitive
+  space_groups: /opt/app-root/src/space_groups
+diffusion: !!python/object:argparse.Namespace
+  beta_end: 4.0
+  beta_schedule: log
+  beta_start: 0.001
+  num_diffusion_timesteps: 10
+lattice_diffusion: !!python/object:argparse.Namespace
+  beta_end: 16.0
+  beta_schedule: log
+  beta_start: 0.1
+  num_diffusion_timesteps: 10
+model: !!python/object:argparse.Namespace
+  basis_emb_size: 8
+  cutoff: 5.0
+  emb_size: 64
+  envelope_exponent: 5
+  extensive: true
+  int_emb_size: 32
+  num_after_skip: 2
+  num_before_skip: 1
+  num_blocks: 4
+  num_dense_output: 3
+  num_radial: 6
+  num_spherical: 7
+  out_emb_size: 64
+optim: !!python/object:argparse.Namespace
+  amsgrad: false
+  beta1: 0.9
+  eps: 1.0e-08
+  grad_clip: 1.0
+  lr: 0.0002
+  optimizer: Adam
+  weight_decay: 0.0
+sampling: !!python/object:argparse.Namespace
+  composition_dict:
+    O: 4
+    Si: 2
+  last_only: true
+  lattice_noise: true
+  lattice_noise_mult: 150.0
+  max_t: 1000
+  n_atoms_constant: true
+  n_atoms_lambda: 10.0
+  remove_atom_mult: 3.0
+  space_group: 213
+test: !!python/object:argparse.Namespace
+  noise_rolls: 1
+  timestep_max: 19
+  timestep_min: 0
+training: !!python/object:argparse.Namespace
+  add_atoms_poisson_l_per_atom: 0.2
+  batch_size: 32
+  count_loss_coef: 0.5
+  lattice_loss_coef: 1.0
+  n_epochs: 10000
+  n_iters: 5000000
+  snapshot_freq: 100
+  validation_freq: 2000

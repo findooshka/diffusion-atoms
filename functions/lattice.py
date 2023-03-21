@@ -1,9 +1,7 @@
 import torch
 import numpy as np
-import sympy as sb
-from sympy.utilities.lambdify import lambdify
-import os, subprocess
 from jarvis.core.atoms import Atoms
+    
 
 def get_lattice_system(space_group):
     rhombohedral = set()#{146, 148, 155, 160, 161, 166, 167}
@@ -39,10 +37,10 @@ def get_mask(lattice_system):
         return [0]
     else:
         raise ValueError(f"Invalid lattice system: {lattice_system}")
-
+        
 def degrees_of_freedom(space_group):
     return len(get_mask(get_lattice_system(space_group)))
- 
+    
 def get_noise_mask(lattice_system, device='cpu'):
     mask = get_mask(lattice_system)
     DoF = len(mask)
@@ -54,6 +52,27 @@ def get_noise_mask(lattice_system, device='cpu'):
         result[1, 0] = 1
         result[2, 0] = 1
     return result
+
+def expand(lattice, lattice_system):
+    if type(lattice) is torch.Tensor:
+        mask = get_noise_mask(lattice_system).clone().to(dtype=lattice.dtype, device=lattice.device)
+    else:
+        mask = get_noise_mask(lattice_system).numpy()
+    result = mask@lattice
+    if lattice_system == 'hexagonal':
+        result[-1] = -1.
+    return result
+    
+def reduce(lattice, lattice_system):
+    mask = get_mask(lattice_system)
+    return lattice[mask]
+    
+def sample_lattice(space_group, atoms, n_operations, var=0.25):
+    scale = (len(atoms.elements) * n_operations**0.5)**(1/3)
+    DoF = degrees_of_freedom(space_group)
+    lattice_system = get_lattice_system(space_group)
+    result = np.random.normal(1.5*scale*np.ones(DoF), var*scale*np.ones(DoF))
+    return expand(result, lattice_system)
     
 def c_to_p_matrix(sg_type, lattice_system, device='cpu'):
     if sg_type == 'C':

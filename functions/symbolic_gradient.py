@@ -1,3 +1,6 @@
+# Currently not used, since we now use empiric gradients estimates
+
+
 import torch
 import numpy as np
 import sympy as sb
@@ -11,8 +14,8 @@ def acotan_sb(x):
 def acotan_np(x):
     return 0.5*np.pi - np.arctan(x)
 
-def softplus_sb(x, t=10.):
-    return sb.Piecewise((sb.log(1 + sb.exp(x)), x < t), (x, x >= t))
+def softplus_sb(x, k=10., t=100.):
+    return sb.Piecewise((k*sb.log(1 + sb.exp(x/k)), x < t), (x, x >= t))
     
 def get_variables(lattice_system):
     if lattice_system == 'triclinic':

@@ -92,32 +92,14 @@ class MyGraph(Graph):
             )
         else:
             raise ValueError("Not implemented yet", neighbor_strategy)
-        # elif neighbor_strategy == "voronoi":
-        #    edges = voronoi_edges(structure)
 
         u, v, r = build_undirected_edgedata(atoms, edges)
-
-        # build up atom attribute tensor
-        #sps_features = []
-        #for ii, s in enumerate(atoms.elements):
-        #    feat = list(get_node_attributes(s, atom_features=atom_features))
-            # if include_prdf_angles:
-            #    feat=feat+list(prdf[ii])+list(adf[ii])
-        #    sps_features.append(feat)
-        #sps_features = np.array(sps_features)
-        #node_features = torch.tensor(sps_features).type(
-        #    torch.get_default_dtype()
-        #)
         g = dgl.graph((u, v))
-        #g.ndata["atom_features"] = node_features
         g.ndata["Z"] = torch.tensor(atoms.atomic_numbers)
         g.edata["r"] = r
         g.edata["d"] = r.norm(dim=1)
 
         if compute_line_graph:
-            # construct atomistic line graph
-            # (nodes are bonds, edges are bond pairs)
-            # and add bond angle cosines as edge features
             lg = g.line_graph(shared=True)
             lg.apply_edges(compute_bond_cosines)
             return g, lg

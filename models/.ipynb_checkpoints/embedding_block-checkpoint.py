@@ -12,7 +12,7 @@ class EmbeddingBlock(nn.Module):
                  bessel_funcs,
                  cutoff,
                  envelope_exponent,
-                 num_atom_types=95,
+                 num_atom_types=96,
                  step_count=20,
                  activation=None):
         super(EmbeddingBlock, self).__init__()
@@ -23,8 +23,10 @@ class EmbeddingBlock(nn.Module):
         self.envelope = Envelope(envelope_exponent)
         self.embedding = nn.Embedding(num_atom_types, emb_size)
         self.step_embedding = nn.Embedding(step_count, emb_size)
+        self.equiv_embedding = nn.Embedding(2, emb_size)
         self.dense_rbf = nn.Linear(num_radial, emb_size)
-        self.dense = nn.Linear(emb_size * 4, emb_size)
+        #self.dense_gradient = nn.Linear(6, emb_size)
+        self.dense = nn.Linear(emb_size * 5, emb_size)
         self.reset_params()
     
     def reset_params(self):
@@ -38,8 +40,12 @@ class EmbeddingBlock(nn.Module):
         rbf = self.dense_rbf(edges.data['rbf'])
         if self.activation is not None:
             rbf = self.activation(rbf)
-
-        m = torch.cat([edges.src['h'], edges.dst['h'], rbf, self.step_embedding(edges.src['step'])], dim=-1)
+        
+        equiv_emb = self.equiv_embedding(edges.data['equiv'].squeeze(-1))
+        #gradient = self.dense_gradient(edges.data['gradient_mat'])
+        
+        #m = torch.cat([edges.src['h'], edges.dst['h'], rbf, self.step_embedding(edges.src['step']), equiv_emb, gradient], dim=-1)
+        m = torch.cat([edges.src['h'], edges.dst['h'], rbf, self.step_embedding(edges.src['step']), equiv_emb], dim=-1)
         m = self.dense(m)
         if self.activation is not None:
             m = self.activation(m)
