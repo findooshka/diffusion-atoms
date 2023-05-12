@@ -19,9 +19,9 @@ from functions.atomic import get_sampling_coords
 from functions.lattice import get_lattice_system, p_to_c
 from functions.denoising import langevin_dynamics
 from jarvis.core.atoms import Atoms
-from functions.symbolic_gradient import get_gradient_func
 from models.dimenet_pp import DimeNetPP
 from models.initializers import GlorotOrthogonal
+from runners.ema import EMAHelper
 
 def get_beta_schedule(beta_schedule, *, beta_start, beta_end, num_diffusion_timesteps):
     def sigmoid(x):
@@ -103,8 +103,6 @@ class Diffusion(object):
         self.lattice_betas = torch.from_numpy(lattice_betas).float().to(self.device)
         self.lattice_num_timesteps = config.lattice_diffusion.num_diffusion_timesteps
         
-        self.gradient_func = get_gradient_func()
-        self.element_loss_coef = np.load(config.data.elements_coef)
         
         self.model = DimeNetPP(emb_size=config.model.emb_size,
                                out_emb_size=config.model.out_emb_size,
@@ -141,19 +139,20 @@ class Diffusion(object):
 
         
         optimizer = get_optimizer(self.config, model.parameters())
+        ema_helper = EMAHelper(mu=self.config.training.ema_mu)
+        ema_helper.register(model)
 
         start_epoch, step = 0, 0
         if self.args.resume_training:
             states = torch.load(os.path.join(self.args.log_path, "ckpt.pth"))
             model.load_state_dict(states[0])
 
-            loss_history = list(np.load(os.path.join(self.args.log_path, "loss.npy")))
+            loss_history = list(np.load(os.path.join(self.args.log_path, "loss_saved.npy")))
             states[1]["param_groups"][0]["eps"] = self.config.optim.eps
             optimizer.load_state_dict(states[1])
             start_epoch = states[2]
             step = states[3]
-            #if self.config.model.ema:
-            #    ema_helper.load_state_dict(states[4])
+            ema_helper.load_state_dict(states[4])
 
         bs = self.config.training.batch_size
         
@@ -163,9 +162,6 @@ class Diffusion(object):
             for i, data_instance in enumerate(train_loader):
                 atoms, operations, space_group, sg_type = data_instance['atoms'], data_instance['operations'], data_instance['space_group'], data_instance['sg_type']
                 if get_lattice_system(space_group) == 'monoclinic' or get_lattice_system(space_group) == 'triclinic':
-                    continue
-                if len(atoms.elements) * len(operations) > 500:
-                    logging.warning("Skipping large structure")
                     continue
                 model.train()
                 step += 1
@@ -189,8 +185,7 @@ class Diffusion(object):
                                     t,
                                     b,
                                     lattice_b,
-                                    self.device,
-                                    gradient=self.gradient_func)
+                                    self.device)
                 if not (loss is None or torch.isnan(loss)):
                     loss *= self.config.training.lattice_loss_coef
                     iteration_time = time.time() - time_start
@@ -199,12 +194,11 @@ class Diffusion(object):
                     )
                     (0.5 * loss / bs).backward()
                     batch_loss[1] += loss.item() / bs
-                    del loss
                 else:
-                    logging.info("Bad lattice / noise, setting loss to 1, skipping the structure")
+                    logging.warning("Failed to give lattice score estimate, skipping the structure")
                     batch_loss[1] += 1. / bs
-                    if loss is not None:
-                        del loss
+                if loss is not None:
+                    del loss
                     
                 ############
                 t = torch.randint(
@@ -217,15 +211,19 @@ class Diffusion(object):
                                              sg_type,
                                              t,
                                              b,
-                                             self.device,
-                                             gradient=self.gradient_func)
-                iteration_time = time.time() - time_start
-                logging.info(
-                    "step: {:.3},\t loss (positions): \t {:.3f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
-                )
-                (0.5 * loss / bs).backward()
-                batch_loss[0] += loss.item() / bs
-                del loss
+                                             self.device)
+                if not (loss is None or torch.isnan(loss)):
+                    iteration_time = time.time() - time_start
+                    logging.info(
+                        "step: {:.3},\t loss (positions): \t {:.3f}, \t time: {:.6} \t timestep: {}".format(step/self.config.training.batch_size, loss.item(), iteration_time, float(t))
+                    )
+                    (0.5 * loss / bs).backward()
+                    batch_loss[0] += loss.item() / bs
+                else:
+                    logging.warning("Failed to give position score estimate, skipping the structure")
+                    batch_loss[1] += 1. / bs
+                if loss is not None:
+                    del loss
 
                 if step % bs == 0:
                     loss_history.append(batch_loss)
@@ -240,33 +238,41 @@ class Diffusion(object):
                     except Exception:
                         pass
                     optimizer.step()
+                    ema_helper.update(model)
 
                
                 if step % bs == 0 and (step // bs) % self.config.training.snapshot_freq == 0 or step == 1:
+                    np.save(os.path.join(self.args.log_path, "loss_saved"), loss_history)
                     states = [
                         model.state_dict(),
                         optimizer.state_dict(),
                         epoch,
-                        step
+                        step,
+                        ema_helper.state_dict()
                     ]
                     torch.save(
                         states,
                         os.path.join(self.args.log_path, "ckpt_{}.pth".format(step // bs)),
                     )
                     torch.save(states, os.path.join(self.args.log_path, "ckpt.pth"))
+                    exit()
                 time_start = time.time()
-
-    def sample(self):
-        config = self.config
+                
+    def sampling_load_model(self, path):
         states = torch.load(
-            os.path.join(self.args.log_path, "ckpt.pth"),
+            path,
             map_location=self.config.device,
         )
         self.model.load_state_dict(states[0], strict=True)
-
+        ema_helper = EMAHelper(mu=self.config.training.ema_rate)
+        ema_helper.register(model)
+        ema_helper.load_state_dict(states[-1])
+        ema_helper.ema(model)
         self.model.eval()
 
-        for order in config.sampling_order:
+    def sample(self):
+        sampling_load_model(os.path.join(self.args.log_path, "ckpt.pth"))
+        for order in self.config.sampling_order:
             for i in range(1, order.count+1):
                 self.sample_sequence(self.model, order, i)
 
@@ -322,37 +328,15 @@ class Diffusion(object):
             num_workers=config.data.num_workers,
         )
         
-        model = DimeNetPP(emb_size=config.model.emb_size,
-                          out_emb_size=config.model.out_emb_size,
-                          int_emb_size=config.model.int_emb_size,
-                          basis_emb_size=config.model.basis_emb_size,
-                          num_blocks=config.model.num_blocks,
-                          num_spherical=config.model.num_spherical,
-                          num_radial=config.model.num_radial,
-                          cutoff=config.model.cutoff,
-                          envelope_exponent=config.model.envelope_exponent,
-                          num_before_skip=config.model.num_before_skip,
-                          num_after_skip=config.model.num_after_skip,
-                          num_dense_output=config.model.num_dense_output,
-                          extensive=config.model.extensive,
-                          output_init=GlorotOrthogonal).to(self.device)
-        model = model.to(self.device)
-        
-        model = torch.nn.DataParallel(model)
-        
         results = {}
         
         
         for name in os.listdir(self.args.log_path):
             if name.find("000.pth") < 0:
                 continue
-            states = torch.load(os.path.join(self.args.log_path, name))
-            print(name)
-            model.load_state_dict(states[0])
-
-            model.eval()
+            logging.info(f"Calculating test loss for: {name}")
+            sampling_load_model(os.path.join(self.args.log_path, name))
             loss = ([], [])
-            
             for i, data_instance in tqdm.tqdm(enumerate(test_loader)):
                 atoms, operations, space_group, sg_type = data_instance['atoms'], data_instance['operations'], data_instance['space_group'], data_instance['sg_type']
                 if get_lattice_system(space_group) == 'monoclinic' or get_lattice_system(space_group) == 'triclinic':

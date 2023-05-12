@@ -1,0 +1,5 @@
+exp/cif_samples/
+data/
+exp/logs/*/loss.npy
+exp/logs/*/ckpt_*
+nohup.out

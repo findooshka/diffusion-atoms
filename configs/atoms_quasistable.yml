@@ -1,9 +1,8 @@
 data:
-    data: "/home/arsen/data/data_quasistable_primitive_train"
-    data_test: "/home/arsen/data/data_quasistable_primitive_test"
-    space_groups: "/home/arsen/data/space_groups"
-    sg_index: "/home/arsen/data/sg_index.json"
-    elements_coef: "/home/arsen/data/element_loss_coef_special.npy"
+    data: "./data/data_quasistable_primitive_train"
+    data_test: "./data/data_quasistable_primitive_test"
+    space_groups: "./data/space_groups"
+    sg_index: "./data/sg_index.json"
     num_workers: 1
 
 model:
@@ -40,6 +39,7 @@ training:
     snapshot_freq: 500
     validation_freq: 2000
     lattice_loss_coef: 1.  # lattice noise loss multiplier
+    ema_mu: 0.999
 
 optim:
     weight_decay: 0.000

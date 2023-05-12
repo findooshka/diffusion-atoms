@@ -60,7 +60,7 @@ def expand(lattice, lattice_system):
         mask = get_noise_mask(lattice_system).numpy()
     result = mask@lattice
     if lattice_system == 'hexagonal':
-        result[-1] = -1.
+        result[-1] = -3**(-.5)
     return result
     
 def reduce(lattice, lattice_system):

@@ -20,7 +20,6 @@ def parse_args_and_config():
         "--config", type=str, required=True, help="Path to the config file"
     )
     parser.add_argument("--seed", type=int, default=1234, help="Random seed")
-    parser.add_argument("--log", type=bool, default=False, help="Whether to log the output in a text file during training")
     parser.add_argument(
         "--doc",
         type=str,
@@ -96,17 +95,13 @@ def parse_args_and_config():
         if not isinstance(level, int):
             raise ValueError("level {} not supported".format(args.verbose))
 
-        handler1 = logging.StreamHandler()
+        handler = logging.StreamHandler()
         formatter = logging.Formatter(
             "%(levelname)s - %(filename)s - %(asctime)s - %(message)s"
         )
         logger = logging.getLogger()
-        handler1.setFormatter(formatter)
-        logger.addHandler(handler1)
-        if args.log:
-            handler2 = logging.FileHandler(os.path.join(args.log_path, "stdout.txt"))
-            handler2.setFormatter(formatter)
-            logger.addHandler(handler2)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
         logger.setLevel(level)
 
     elif args.sample:
@@ -209,7 +204,6 @@ def dict2namespace(config):
 
 def main():
     args, config = parse_args_and_config()
-    logging.info("Writing log file to {}".format(args.log_path))
     logging.info("Exp instance id = {}".format(os.getpid()))
 
     try:

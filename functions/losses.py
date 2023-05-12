@@ -51,21 +51,20 @@ def lattice_loss(model,
                  t: torch.LongTensor,
                  b_pos: torch.Tensor,
                  b: torch.Tensor,
-                 device,
-                 gradient):
+                 device):
     s_t_pos = b_pos.index_select(0, t)
     noised_atoms, _ = add_position_noise(s_t_pos, space_group, sg_type, atoms, device)
     s_t = b.index_select(0, t)
     noised = add_lattice_noise(s_t, space_group, noised_atoms, device)
-    logging.info(f"{s_t.item()}, {s_t_pos.item()}")
+    #logging.info(f"{s_t.item()}, {s_t_pos.item()}")
     if noised is None:
         return None
     noised_atoms, lattice_noise = noised
-    noise_estimate = get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type="lattice", gradient=gradient, emax=500)[1]
+    noise_estimate = get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type="lattice", emax=-1)[1]
     if noise_estimate == None:
         return None
-    logging.info(f"noise: {lattice_noise}")
-    logging.info(f"estimate: {noise_estimate}")
+    #logging.info(f"noise: {lattice_noise}")
+    #logging.info(f"estimate: {noise_estimate}")
     return (noise_estimate - lattice_noise).square().mean()
     
 
@@ -76,11 +75,10 @@ def noise_estimation_loss(model,
                           sg_type,
                           t: torch.LongTensor,
                           b: torch.Tensor,
-                          device,
-                          gradient):
+                          device):
     s_t = b.index_select(0, t)
     noised_atoms, e = add_position_noise(s_t, space_group, sg_type, atoms, device)
-    pos_eps = get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type="edges", gradient=gradient)[0]
+    pos_eps = get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type="edges")[0]
     loss = (e - pos_eps).square().mean()
     
     return loss

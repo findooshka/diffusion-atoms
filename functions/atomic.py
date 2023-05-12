@@ -3,11 +3,10 @@ import numpy as np
 import dgl.function as fn
 import dgl
 import sympy
-from functions.graph import MyGraph
+from functions.graph import atom_dgl_multigraph
 from jarvis.core.atoms import Atoms
 from random import sample, shuffle
 from joblib import Parallel, delayed
-from datasets.symmetries import get_equiv, apply_operations_atoms
 from functions.lattice import degrees_of_freedom, get_noise_mask, get_lattice_system, c_to_p, c_to_p_matrix, expand, reduce
 import logging
 from time import time
@@ -165,10 +164,8 @@ def get_sampling_coords(atoms, noise_original, noise_std):
         x = x @ lattice
     return x
 
-def _get_eps(edge_movement, graph, line_graph=False):
-    graph = graph.local_var()
-    if line_graph:
-        graph.edata['r'] = graph.ndata['r'].index_select(0, graph.edges()[1])
+def _get_eps(edge_movement, graph):
+    graph = dgl.reverse(graph.local_var(), copy_ndata=True, copy_edata=True)
     norm = torch.linalg.norm(graph.edata['r'], dim=1).view(-1,1).repeat(1, 3)
     graph.edata['edge_movement'] = 15 * graph.edata['r'] / norm * torch.tanh(edge_movement / 15)
     assert graph.edata['edge_movement'].shape == graph.edata['r'].shape
@@ -193,11 +190,12 @@ def empiric_gradient(b6, v, space_group, device='cpu', delta_val=0.1):
     return result
 
 @torch.no_grad()
-def get_gradients(graph, space_group, b6, lattice, gradient, device, emax, dtype):
+def get_gradients(graph, space_group, b6, lattice, device, emax, dtype):
     inv_lattice = np.linalg.inv(lattice)
     r_numpy = graph.edata['r'].cpu().detach().numpy()
     b6_numpy = b6.cpu().detach().numpy()
-    index = list(np.argwhere((graph.edata['equiv'].squeeze(-1).detach().cpu().numpy() == 0)).ravel())
+    #index = np.arange(graph.edata['equiv'].shape[0])
+    index = list((graph.edata['d'].squeeze(-1).detach().cpu().numpy() > 0.15).ravel())
     if len(index) == 0:
         return None, index
     if emax > 0 and len(index) > emax:
@@ -208,19 +206,17 @@ def get_gradients(graph, space_group, b6, lattice, gradient, device, emax, dtype
     gradients = empiric_gradient(reduce(b6, lattice_system), graph.edata['r'][index]@inv_lattice_t, space_group, device=device)
     return gradients / gradients.square().sum(dim=1, keepdim=True), index
 
-def gradient_estimate_gradient_estimate(gradients, target, device, alpha):
-    differential = torch.empty()
-
 def get_graphs(atoms, operations, device, t, lattice_system, sg_type):
     atoms = c_to_p(atoms, sg_type, lattice_system)
-    atoms, equiv = apply_operations_atoms(atoms, operations)
-    graph, line_graph = MyGraph.atom_dgl_multigraph(atoms, min_neighbours=16, random_neighbours=6)
+    #atoms, equiv = apply_operations_atoms(atoms, operations)
+    #graph, line_graph = MyGraph.atom_dgl_multigraph(atoms, min_neighbours=16, random_neighbours=6)
+    graph, line_graph = atom_dgl_multigraph(atoms=atoms, operations=operations, n_neighbours=35)
     graph, line_graph = graph.to(device=device), line_graph.to(device=device)
     graph.ndata['step'] = t.to(dtype=int) * torch.ones([graph.number_of_nodes(),], device=device, dtype=torch.int)
-    graph.edata['equiv'] = get_equiv(equiv, graph, device)
+    #graph.edata['equiv'] = get_equiv(equiv, graph, device)
     return graph, line_graph
 
-def get_output(noised_atoms, operations, space_group, sg_type, model, t, device, gradient=None, output_type='all', emax=200):
+def get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type='all', emax=200):
     b6 = B6_transform(B9_to_B6(torch.tensor(noised_atoms.lattice_mat, device=device), device=device))
     b9 = noised_atoms.lattice_mat
     lattice_system = get_lattice_system(space_group)
@@ -228,21 +224,20 @@ def get_output(noised_atoms, operations, space_group, sg_type, model, t, device,
     graph, line_graph = get_graphs(noised_atoms, operations, device, t, lattice_system, sg_type)
     if output_type == 'atoms':
         graph.ndata['Z'] *= 0
-    output, nodes_output = model(graph, line_graph)
+    output = model(graph, line_graph)
     eps_atoms, eps_lattice, elements = None, None, None
     if output_type == 'all' or output_type == 'edges':
         eps_atoms = _get_eps(output[:,0].unsqueeze(-1), graph)
-        eps_atoms = eps_atoms[:eps_atoms.shape[0]//len(operations)]
+        #eps_atoms = eps_atoms[:eps_atoms.shape[0]]//len(operations)]
     if output_type == 'all' or output_type == 'lattice':
         gradient_mat, index = get_gradients(graph,
                                             space_group,
                                             b6,
                                             b9,
-                                            gradient,
                                             device=device,
                                             emax=emax,
                                             dtype=output.dtype)
-        if gradient_mat == None:
+        if gradient_mat == None or torch.isnan(output[:,1]).any():
             return None, None
         gradient_mat = gradient_mat.to(dtype=noise_mask.dtype)
         eps_lattice = (output[index,1].unsqueeze(-1) * gradient_mat).mean(axis=0)

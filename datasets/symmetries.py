@@ -26,8 +26,6 @@ def get_operations(filename):
     space_group = int(output[2].split()[-1])
     #return operations, 1, 'P'
     return operations, space_group, sg_type
-    #return [(np.eye(3), np.zeros(3))], space_group, sg_type
-    #return [(np.eye(3), np.zeros(3))], 1, 'P'
     
 def apply_operation(operation, frac_coords):
     return ((operation[0]@frac_coords.T).T + operation[1]) % 1
@@ -44,6 +42,18 @@ def crystal_distance(pos1, pos2, norm=True):
     if norm:
         return np.linalg.norm(diff, axis=-1)
     return diff
+    
+def inverse_operations_index(operations):
+    index = np.empty(len(operations), dtype=int)
+    for i in range(len(operations)):
+        for j in range(len(operations)):
+            if ((np.abs(operations[j][0]@operations[i][0] - np.eye(3)) < 1e-4).all()
+                    and crystal_distance(operations[j][0]@operations[i][1] + operations[j][1], np.zeros(3))[0,0] < 1e-4):
+                index[i] = j
+                break
+        else:
+            raise Exception("Failed to find inverse operation")
+    return index
 
 def reduce_atoms(atoms, operations, check_consistency=False):
     indices = []
@@ -71,7 +81,7 @@ def apply_operations_atoms(atoms, operations, repeat_threshold=-1):
     if repeat_threshold > 0:
         index = [0]
         for i in range(1, len(elements)):
-            if (crystal_distance(coords[i], coords[i%n:i:n]) > repeat_threshold).all():
+            if (np.linalg.norm(crystal_distance(coords[i], coords[i%n:i:n], norm=False) @ atoms.lattice_mat, axis=-1) > repeat_threshold).all():
                 index.append(i)
         coords = coords[index]
         elements = list(np.array(elements)[index])

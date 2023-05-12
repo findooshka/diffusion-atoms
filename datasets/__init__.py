@@ -23,16 +23,11 @@ class AtomsData(Dataset):
         return self.size
     
     def __getitem__(self, idx):
-        logging.info(self.files[idx])
-        #try:
         atoms = Atoms.from_cif(os.path.join(self.folder, self.files[idx]), use_cif2cell=False, get_primitive_atoms=False)
         operations, space_group, sg_type = get_operations(os.path.join(self.sg_folder, str(self.sg_index[self.files[idx]])))
-        logging.info(f"atoms {len(atoms.elements)}, operations {len(operations)}")
+        #logging.info(f"atoms {len(atoms.elements)}, operations {len(operations)}")
         reduced_atoms, _ = reduce_atoms(atoms, operations, check_consistency=True)
         reduced_atoms = p_to_c(reduced_atoms, sg_type, get_lattice_system(space_group))
-        #except Exception as exp:
-        #    logging.warning(os.path.join(self.folder, self.files[idx]))
-        #    logging.warning(exp)
         return {'atoms': reduced_atoms, 'operations': operations, 'space_group': space_group, 'sg_type': sg_type, 'name': self.files[idx]}
 
 

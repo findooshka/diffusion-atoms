@@ -6,6 +6,7 @@ from jarvis.core.specie import atomic_numbers_to_symbols
 import numpy as np
 from collections import Counter
 from datasets.symmetries import reduce_atoms, apply_operations_atoms
+from postprocessing import round_positions
 
 def compute_st(b, t):
     return b.cumsum(dim=0).index_select(0, t.long()).view(-1, 1)
@@ -111,6 +112,7 @@ def langevin_dynamics(atoms,
                              lattice_mat = cp_matrix@lattice,
                              elements = atoms.elements,
                              cartesian = True)
-        result.append(apply_operations_atoms(output_atoms, operations, 4e-1)[0])
+        output_atoms = apply_operations_atoms(output_atoms, operations, 4e-1)[0]
+        result.append(round_positions(operations, atoms))
     return result
    
