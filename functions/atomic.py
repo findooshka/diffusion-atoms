@@ -179,8 +179,8 @@ def lengths(b9, v):
 def empiric_gradient(b6, v, space_group, device='cpu', delta_val=0.1):
     lattice_system = get_lattice_system(space_group)
     result = torch.empty((v.shape[0], b6.shape[0]), device=device)
-    b9 = B6_to_B9(B6_inv_transform(expand(b6, lattice_system)), device=device).to(dtype=v.dtype)
-    l = lengths(b9, v)
+    #b9 = B6_to_B9(B6_inv_transform(expand(b6, lattice_system)), device=device).to(dtype=v.dtype)
+    #l = lengths(b9, v)
     for i in range(b6.shape[0]):
         delta = torch.zeros_like(b6)
         delta[i] = delta_val
@@ -195,22 +195,23 @@ def get_gradients(graph, space_group, b6, lattice, device, emax, dtype):
     r_numpy = graph.edata['r'].cpu().detach().numpy()
     b6_numpy = b6.cpu().detach().numpy()
     #index = np.arange(graph.edata['equiv'].shape[0])
-    index = list((graph.edata['d'].squeeze(-1).detach().cpu().numpy() > 0.15).ravel())
+    index = (graph.edata['d'].squeeze(-1).detach().cpu().numpy() > 0.15).ravel()
     if len(index) == 0:
         return None, index
     if emax > 0 and len(index) > emax:
-        index = sample(index, emax)
+        index[sample(list(np.argwhere(index)[:,0]), len(index) - emax)] = False
     r_numpy = r_numpy[index]
     inv_lattice_t = torch.linalg.inv(torch.tensor(lattice, device=device, dtype=graph.edata['r'].dtype))
     lattice_system = get_lattice_system(space_group)
     gradients = empiric_gradient(reduce(b6, lattice_system), graph.edata['r'][index]@inv_lattice_t, space_group, device=device)
-    return gradients / gradients.square().sum(dim=1, keepdim=True), index
+    gradients = gradients / (1e-3 + gradients.square().sum(dim=1, keepdim=True))
+    return gradients, index
 
 def get_graphs(atoms, operations, device, t, lattice_system, sg_type):
     atoms = c_to_p(atoms, sg_type, lattice_system)
     #atoms, equiv = apply_operations_atoms(atoms, operations)
     #graph, line_graph = MyGraph.atom_dgl_multigraph(atoms, min_neighbours=16, random_neighbours=6)
-    graph, line_graph = atom_dgl_multigraph(atoms=atoms, operations=operations, n_neighbours=35)
+    graph, line_graph = atom_dgl_multigraph(atoms=atoms, operations=operations)
     graph, line_graph = graph.to(device=device), line_graph.to(device=device)
     graph.ndata['step'] = t.to(dtype=int) * torch.ones([graph.number_of_nodes(),], device=device, dtype=torch.int)
     #graph.edata['equiv'] = get_equiv(equiv, graph, device)

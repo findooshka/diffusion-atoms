@@ -39,7 +39,7 @@ def get_all_neighbors(atoms,
         coords = np.dot(frac_coords, lattice_mat)
         z = (coords_in_cell[:, None, :] - coords[None, :, :] + np.dot(image, lattice_mat))
         all_dists = np.sum(z ** 2, axis=-1) ** 0.5
-        all_within_r = np.bitwise_and(all_dists <= r, all_dists > 1e-4)
+        all_within_r = np.bitwise_and(all_dists <= r, all_dists > 1e-1)
         for (j, d, diff, within_r) in zip(all_indices, all_dists, z, all_within_r):
             for i in indices[within_r]:
                 if d[i] > bond_tol:
@@ -66,7 +66,7 @@ def nearest_neighbor_edges(
     min_nbrs = min(len(neighbourlist) for neighbourlist in all_neighbours)
     
     while min_nbrs < n_neighbours:
-        logging.info("Increasing cutoff")
+        #logging.info("Increasing cutoff")
         lat = atoms.lattice
         cutoff += 1
         all_neighbours = get_all_neighbors(atoms, operations, r=cutoff)
@@ -136,7 +136,7 @@ def atom_dgl_multigraph(
     atoms,
     operations=[(np.eye(3), np.zeros(3))],  # symmetry operations x -> Ax + b, list of tuples of A and b; first operation should always be identity
     start_cutoff=5.5,
-    n_neighbours=25,
+    n_neighbours=30,
     dtype=torch.float
 ):
     """Obtain a DGLGraph for Atoms object."""

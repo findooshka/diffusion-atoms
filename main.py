@@ -32,7 +32,7 @@ def parse_args_and_config():
         default="info",
         help="Verbose level: info | debug | warning | critical",
     )
-    parser.add_argument("--evaluate", action="store_true", help="Whether to evaluate the model test loss")
+    parser.add_argument("--loss", action="store_true", help="Whether to evaluate the model test loss")
     parser.add_argument(
         "--sample",
         action="store_true",
@@ -67,7 +67,7 @@ def parse_args_and_config():
         config = yaml.safe_load(f)
     new_config = dict2namespace(config)
 
-    if not args.sample and not args.evaluate:
+    if not args.sample and not args.loss:
         if not args.resume_training:
             if os.path.exists(args.log_path):
                 overwrite = False
@@ -104,6 +104,7 @@ def parse_args_and_config():
         logger.addHandler(handler)
         logger.setLevel(level)
 
+        
     elif args.sample:
         level = getattr(logging, args.verbose.upper(), None)
         if not isinstance(level, int):
@@ -127,6 +128,7 @@ def parse_args_and_config():
         os.makedirs(os.path.join("exp", "cif_samples"), exist_ok=True)
         os.makedirs(os.path.join("exp", "cif_samples", args.doc), exist_ok=True)
         os.makedirs(os.path.join("exp", "cif_samples", args.doc, sampling_order['name']), exist_ok=True)
+        overwrite = args.ni
         for order in sampling_order['orders']:
             if type(order['space_group']) is int:
                 order['space_group'] = [order['space_group']]
@@ -141,10 +143,9 @@ def parse_args_and_config():
                 if not os.path.exists(image_folder):
                     os.makedirs(image_folder)
                 else:
-                    overwrite = args.ni
                     if not overwrite:
                         response = input(
-                            f"Image folder {image_folder} already exists. Overwrite? (Y/N)"
+                            f"Image folder already exists. Overwrite? (Y/N)"
                         )
                         if response.upper() == "Y":
                             overwrite = True
@@ -154,8 +155,12 @@ def parse_args_and_config():
                     else:
                         print("Output image folder exists. Program halted.")
                         sys.exit(0)
-                for i in range(1, order['count']+1):
-                    os.makedirs(os.path.join(image_folder, str(i)), exist_ok=True)
+                if not order['only_final']:
+                    for i in range(1, order['count']+1):
+                        os.makedirs(os.path.join(image_folder, str(i)), exist_ok=True)
+                    finals_dir = os.path.join(image_folder, "finals")
+                else:
+                    finals_dir = image_folder
                 new_config.sampling_order[-1].image_folder = image_folder
                 new_config.sampling_order[-1].composition = order['composition']
                 new_config.sampling_order[-1].space_group = space_group
@@ -163,15 +168,12 @@ def parse_args_and_config():
                 new_config.sampling_order[-1].random_positions = order['random_positions']
                 new_config.sampling_order[-1].count = order['count']
                 new_config.sampling_order[-1].T = order['T']
+                new_config.sampling_order[-1].only_final = order['only_final']
                 if 'template' in order:
                     new_config.sampling_order[-1].template = order['template']
                 else:
                     if not order['random_lattice'] or not order['random_positions']:
                         raise RuntimeError("Invalid order given, not template structure for fixed lattice/positions")
-                for i in range(1, args.count+1):
-                    current_dir = os.path.join(image_folder, str(i))
-                    os.makedirs(current_dir, exist_ok=True)
-                finals_dir = os.path.join(image_folder, "finals")
                 os.makedirs(finals_dir, exist_ok=True)
                 new_config.sampling_order[-1].finals_dir = finals_dir
 
@@ -210,7 +212,7 @@ def main():
         runner = Diffusion(args, config)
         if args.sample:
             runner.sample()
-        elif args.evaluate:
+        elif args.loss:
             runner.test()
         else:
             runner.train()

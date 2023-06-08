@@ -54,6 +54,7 @@ def lattice_loss(model,
                  device):
     s_t_pos = b_pos.index_select(0, t)
     noised_atoms, _ = add_position_noise(s_t_pos, space_group, sg_type, atoms, device)
+    #noised_atoms = atoms
     s_t = b.index_select(0, t)
     noised = add_lattice_noise(s_t, space_group, noised_atoms, device)
     #logging.info(f"{s_t.item()}, {s_t_pos.item()}")

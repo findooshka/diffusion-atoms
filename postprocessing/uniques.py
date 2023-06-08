@@ -47,7 +47,10 @@ def process_batch(batch_dir, vasp):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     for sg_dir in os.listdir(batch_dir):
-        structures, names = read_directory(os.path.join(batch_dir, sg_dir, "finals"))
+        path = os.path.join(batch_dir, sg_dir)
+        if os.path.exists(os.path.join(path, "finals")):
+            path = os.path.join(path, "finals")
+        structures, names = read_directory(path)
         out_sg_dir_path = os.path.join(output_dir, sg_dir)
         if not os.path.exists(out_sg_dir_path):
              os.makedirs(out_sg_dir_path)

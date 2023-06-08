@@ -1,0 +1,56 @@
+data:
+    data: "./data/data_quasistable_primitive_train"
+    data_test: "./data/data_quasistable_primitive_test"
+    space_groups: "./data/space_groups"
+    sg_index: "./data/sg_index.json"
+    num_workers: 1
+
+model:
+  emb_size: 64
+  out_emb_size: 64
+  int_emb_size: 32
+  basis_emb_size: 8
+  num_blocks: 4
+  num_spherical: 7
+  num_radial: 6
+  envelope_exponent: 5
+  cutoff: 5.0
+  extensive: True
+  num_before_skip: 1
+  num_after_skip: 2
+  num_dense_output: 3
+
+diffusion:
+    beta_schedule: log
+    beta_start: 0.001
+    beta_end: 36.
+    num_diffusion_timesteps: 10
+
+lattice_diffusion:
+    beta_schedule: log
+    beta_start: 0.1
+    beta_end: 36.
+    num_diffusion_timesteps: 10
+
+training:
+    batch_size: 32
+    n_epochs: 10000
+    n_iters: 5000000
+    snapshot_freq: 500
+    validation_freq: 2000
+    lattice_loss_coef: 1.  # lattice noise loss multiplier
+    ema_mu: 0.999
+
+optim:
+    weight_decay: 0.000
+    optimizer: "Adam"
+    lr: 0.0002
+    beta1: 0.9
+    amsgrad: false
+    eps: 0.00000001
+    grad_clip: 1.0
+    
+test:
+    noise_rolls: 1
+    timestep_min: 0
+    timestep_max: 9

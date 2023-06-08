@@ -22,6 +22,7 @@ from jarvis.core.atoms import Atoms
 from models.dimenet_pp import DimeNetPP
 from models.initializers import GlorotOrthogonal
 from runners.ema import EMAHelper
+import argparse
 
 def get_beta_schedule(beta_schedule, *, beta_start, beta_end, num_diffusion_timesteps):
     def sigmoid(x):
@@ -172,7 +173,6 @@ class Diffusion(object):
                 
                 if step % bs == 1:
                     optimizer.zero_grad()
-                    logging.info("zero_grad")
                 
                 t = torch.randint(
                     low=0, high=config.lattice_diffusion.num_diffusion_timesteps, size=(1,)
@@ -255,7 +255,6 @@ class Diffusion(object):
                         os.path.join(self.args.log_path, "ckpt_{}.pth".format(step // bs)),
                     )
                     torch.save(states, os.path.join(self.args.log_path, "ckpt.pth"))
-                    exit()
                 time_start = time.time()
                 
     def sampling_load_model(self, path):
@@ -264,28 +263,32 @@ class Diffusion(object):
             map_location=self.config.device,
         )
         self.model.load_state_dict(states[0], strict=True)
-        ema_helper = EMAHelper(mu=self.config.training.ema_rate)
-        ema_helper.register(model)
+        ema_helper = EMAHelper(mu=self.config.training.ema_mu)
+        ema_helper.register(self.model)
         ema_helper.load_state_dict(states[-1])
-        ema_helper.ema(model)
+        ema_helper.ema(self.model)
         self.model.eval()
 
     def sample(self):
-        sampling_load_model(os.path.join(self.args.log_path, "ckpt.pth"))
+        self.sampling_load_model(os.path.join(self.args.log_path, "ckpt.pth"))
         for order in self.config.sampling_order:
-            for i in range(1, order.count+1):
+            logging.info(f"Current space group: {order.space_group}")
+            for i in tqdm.tqdm(range(1, order.count+1)):
                 self.sample_sequence(self.model, order, i)
-
-    def sample_sequence(self, model, order, index=None):
+    
+    def sample_sequence(self, model, order, index, final_file_name=None):
         config = self.config
-        folder = os.path.join(order.image_folder, str(index))
         space_group = order.space_group
         operations, _, sg_type = get_operations(os.path.join(self.config.data.space_groups, str(space_group)))
         lattice_system = get_lattice_system(space_group)
         if hasattr(order, 'template'):
             atoms = Atoms.from_cif(order.template, use_cif2cell=False, get_primitive_atoms=False)
-            atoms, _ = reduce_atoms(atoms, operations)
+            atoms, _ = reduce_atoms(atoms, operations, check_consistency=True)
             atoms = p_to_c(atoms, sg_type, lattice_system)
+            atoms = Atoms(coords=atoms.cart_coords+np.random.normal(scale=0.01, size=atoms.cart_coords.shape),
+                          lattice_mat=atoms.lattice_mat,
+                          cartesian=True,
+                          elements=atoms.elements)
         else:
             composition = []
             for element in order.composition:
@@ -295,7 +298,9 @@ class Diffusion(object):
                           elements = composition,
                           cartesian=True)
     
-        atoms.write_cif(os.path.join(folder, f"0_original.cif"), with_spg_info=False)
+        if not order.only_final:
+            folder = os.path.join(order.image_folder, str(index))
+            atoms.write_cif(os.path.join(folder, f"0_original.cif"), with_spg_info=False)
         
 
         with torch.no_grad():
@@ -308,13 +313,13 @@ class Diffusion(object):
                               model,
                               self.device,
                               T=order.T,
-                              gradient=self.gradient_func,
                               noise_original_positions=self.args.noise_original,
                               random_positions=order.random_positions,
                               random_lattice=order.random_lattice)
-        for i in range(len(atoms_seq)):
-            atoms_seq[i].write_cif(os.path.join(folder, f"{i}.cif"), with_spg_info=False)
-        atoms_seq[-1].write_cif(os.path.join(order.finals_dir, f"{index}.cif"), with_spg_info=False)
+        if not order.only_final:
+            for i in range(len(atoms_seq)):
+                atoms_seq[i].write_cif(os.path.join(folder, f"{i}.cif"), with_spg_info=False)
+        atoms_seq[-1].write_cif(os.path.join(order.finals_dir, f"{index if final_file_name is None else final_file_name}.cif"), with_spg_info=False)
 
     @torch.no_grad()
     def test(self):
@@ -332,10 +337,9 @@ class Diffusion(object):
         
         
         for name in os.listdir(self.args.log_path):
-            if name.find("000.pth") < 0:
-                continue
             logging.info(f"Calculating test loss for: {name}")
-            sampling_load_model(os.path.join(self.args.log_path, name))
+            logging.info(name)
+            self.sampling_load_model(os.path.join(self.args.log_path, name))
             loss = ([], [])
             for i, data_instance in tqdm.tqdm(enumerate(test_loader)):
                 atoms, operations, space_group, sg_type = data_instance['atoms'], data_instance['operations'], data_instance['space_group'], data_instance['sg_type']
@@ -350,16 +354,15 @@ class Diffusion(object):
                         low=config.test.timestep_min, high=config.test.timestep_max+1, size=(1,)
                     ).to(self.device)
                     to_add = (   
-                                 noise_estimation_loss(model,
+                                 noise_estimation_loss(self.model,
                                                        atoms,
                                                        operations,
                                                        space_group,
                                                        sg_type,
                                                        t,
                                                        b,
-                                                       self.device,
-                                                       gradient=self.gradient_func),
-                                 lattice_loss(model,
+                                                       self.device),
+                                 lattice_loss(self.model,
                                               atoms,
                                               operations,
                                               space_group,
@@ -367,8 +370,7 @@ class Diffusion(object):
                                               t,
                                               b,
                                               lattice_b,
-                                              self.device,
-                                              gradient=self.gradient_func),
+                                              self.device),
                     )
                     loss[0].append(to_add[0].item())
                     if to_add[1] is not None:
