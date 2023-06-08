@@ -1,3 +1,5 @@
+![overview](images/TOC.png)
+
 Implementation of the model in the *Data-driven score-based models for generating
 stable structures with adaptive crystal cells* paper.
 
@@ -21,11 +23,11 @@ To continue training:
 
 To sample using a trained model model, prepare a file following the example at sampling\_orders/example.yml and execute:
 
-    python3 main.py --config config.yml --doc name --sample --sampling\_order\_path name\_of\_the\_file
+    python3 main.py --config config.yml --doc name --sample --sampling_order_path name_of_the_file
 
 Or use a pretrained model:
 
-    python3 main.py --config config.yml --doc pretrained --sample --sampling\_order\_path name\_of\_the\_file
+    python3 main.py --config config.yml --doc pretrained --sample --sampling_order_path name_of_the_file
     
 The samples are found in `exp/cif_samples`. You can run the script `postprocessing/uniques.py` to remove the redundant structures, if necessary, for example:
 
