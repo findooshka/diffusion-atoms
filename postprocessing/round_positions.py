@@ -215,21 +215,25 @@ def process_batch(batch_dir, vasp, op_dir):
         os.makedirs(output_dir)
     for sg_dir in tqdm(os.listdir(batch_dir)):
         operations, space_group, sg_type = get_operations(op_dir + sg_dir.split('_')[-1])
-        structures = os.listdir(os.path.join(batch_dir, sg_dir, "finals"))#read_directory(os.path.join(batch_dir, sg_dir, "finals"))
+        if 'finals' in os.listdir(os.path.join(batch_dir, sg_dir)):
+            read_dir_path = os.path.join(batch_dir, sg_dir, "finals")
+        else:
+            read_dir_path = os.path.join(batch_dir, sg_dir)
+        structures = os.listdir(read_dir_path)
         out_sg_dir_path = os.path.join(output_dir, sg_dir)
         if not os.path.exists(out_sg_dir_path):
             os.makedirs(out_sg_dir_path)
-        out_sg_dir_path = os.path.join(output_dir, sg_dir, "finals")
+        out_sg_dir_path = os.path.join(output_dir, sg_dir)
         if not os.path.exists(out_sg_dir_path):
             os.makedirs(out_sg_dir_path)
         for structure in structures:
             try:
-                atoms = Atoms.from_cif(os.path.join(batch_dir, sg_dir, "finals", structure), use_cif2cell=False, get_primitive_atoms=False)
+                atoms = Atoms.from_cif(os.path.join(read_dir_path, structure), use_cif2cell=False, get_primitive_atoms=False)
                 #atoms = reduce_atoms(atoms, operations)[0]
                 #atoms = apply_operations_atoms(atoms, operations, 0.01)[0]
                 atoms = round_positions(operations, atoms)
             except Exception as e:
-                logging.error(f"Error while processing structure {os.path.join(batch_dir, sg_dir, 'finals', structure)}")
+                logging.error(f"Error while processing structure {os.path.join(read_dir_path, structure)}")
                 logging.error(e)
             else:
                 if vasp:
