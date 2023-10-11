@@ -1,0 +1,113 @@
+name: "example"
+orders:
+    - config: "atoms_quasistable.yml"
+      space_group: [62, 194, 139, 63, 166, 123, 148,
+                    225, 221, 216, 227, 198, 223, 205]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 1
+        Si: 1
+        P: 1
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 50  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [164, 156, 129, 189, 160, 61, 33, 71, 146,
+                    229, 230, 204, 220, 217, 218, 206, 212, 200]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 1
+        Si: 1
+        P: 1
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 20  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [62, 194, 139, 63, 166, 123, 148,
+                    225, 221, 216, 227, 198, 223, 205]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 2
+        Si: 1
+        P: 1
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 50  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [164, 156, 129, 189, 160, 61, 33, 71, 146,
+                    229, 230, 204, 220, 217, 218, 206, 212, 200]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 2
+        Si: 1
+        P: 1
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 10  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [62, 194, 139, 63, 166, 123, 148,
+                    225, 221, 216, 227, 198, 223, 205]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 1
+        Si: 2
+        P: 1
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 50  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [164, 156, 129, 189, 160, 61, 33, 71, 146,
+                    229, 230, 204, 220, 217, 218, 206, 212, 200]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 1
+        Si: 2
+        P: 1
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 10  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [62, 194, 139, 63, 166, 123, 148,
+                    225, 221, 216, 227, 198, 223, 205]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 1
+        Si: 1
+        P: 2
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 50  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures
+      
+    - config: "atoms_quasistable.yml"
+      space_group: [164, 156, 129, 189, 160, 61, 33, 71, 146,
+                    229, 230, 204, 220, 217, 218, 206, 212, 200]
+      random_positions: True
+      random_lattice: True
+      composition:  # non-equivalent positions per element
+        Cu: 1
+        Si: 1
+        P: 2
+      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
+      count: 10  # samples per space group
+      T: 80   # steps per noise level
+      only_final: True  # do not write intermediate structures

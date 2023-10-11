@@ -52,21 +52,27 @@ def lattice_loss(model,
                  b_pos: torch.Tensor,
                  b: torch.Tensor,
                  device):
-    s_t_pos = b_pos.index_select(0, t)
-    noised_atoms, _ = add_position_noise(s_t_pos, space_group, sg_type, atoms, device)
-    #noised_atoms = atoms
-    s_t = b.index_select(0, t)
-    noised = add_lattice_noise(s_t, space_group, noised_atoms, device)
-    #logging.info(f"{s_t.item()}, {s_t_pos.item()}")
-    if noised is None:
-        return None
-    noised_atoms, lattice_noise = noised
-    noise_estimate = get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type="lattice", emax=-1)[1]
+    lattice_noise_batch = []
+    noised_atoms_batch = []
+    for i in range(len(atoms)):
+        s_t_pos = b_pos.index_select(0, t[i])
+        noised_atoms, _ = add_position_noise(s_t_pos, space_group[i], sg_type[i], atoms[i], device)
+        s_t = b.index_select(0, t[i])
+        noised = add_lattice_noise(s_t, space_group[i], noised_atoms, device)
+        if noised is None:
+            return None
+        noised_atoms_batch.append(noised[0])
+        lattice_noise_batch.append(noised[1])
+    noise_estimate = get_output(noised_atoms_batch, operations, space_group, sg_type, model, t, device, output_type="lattice", emax=-1)[1]
     if noise_estimate == None:
         return None
     #logging.info(f"noise: {lattice_noise}")
     #logging.info(f"estimate: {noise_estimate}")
-    return (noise_estimate - lattice_noise).square().mean()
+    result = 0
+    for i in range(len(atoms)):
+        result = result + (noise_estimate[i] - lattice_noise_batch[i]).square().mean()
+    result = result / len(atoms)
+    return result
     
 
 def noise_estimation_loss(model,
@@ -77,10 +83,17 @@ def noise_estimation_loss(model,
                           t: torch.LongTensor,
                           b: torch.Tensor,
                           device):
-    s_t = b.index_select(0, t)
-    noised_atoms, e = add_position_noise(s_t, space_group, sg_type, atoms, device)
+    noised_atoms = []
+    e = []
+    loss = 0
+    for i in range(len(atoms)):
+        s_t = b.index_select(0, t[i])
+        noised = add_position_noise(s_t, space_group[i], sg_type[i], atoms[i], device)
+        noised_atoms.append(noised[0])
+        e.append(noised[1])
     pos_eps = get_output(noised_atoms, operations, space_group, sg_type, model, t, device, output_type="edges")[0]
-    loss = (e - pos_eps).square().mean()
-    
+    for i in range(len(atoms)):
+        loss = loss + (e[i] - pos_eps[i]).square().mean()
+    loss = loss / len(atoms)
     return loss
     

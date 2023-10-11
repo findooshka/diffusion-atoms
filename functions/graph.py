@@ -136,7 +136,7 @@ def atom_dgl_multigraph(
     atoms,
     operations=[(np.eye(3), np.zeros(3))],  # symmetry operations x -> Ax + b, list of tuples of A and b; first operation should always be identity
     start_cutoff=5.5,
-    n_neighbours=30,
+    n_neighbours=80,
     dtype=torch.float
 ):
     """Obtain a DGLGraph for Atoms object."""

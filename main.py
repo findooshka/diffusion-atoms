@@ -39,6 +39,7 @@ def parse_args_and_config():
         help="Whether to produce samples from the model",
     )
     parser.add_argument("--count", type=int, default=1, help="Structures to sample")
+    parser.add_argument("--timestamp", type=int, default=-1, help="Which timestamp to load (-1 means the last one)")
     parser.add_argument(
         "--resume_training", action="store_true", help="Whether to resume training"
     )
@@ -90,35 +91,8 @@ def parse_args_and_config():
             with open(os.path.join(args.log_path, "config.yml"), "w") as f:
                 yaml.dump(new_config, f, default_flow_style=False)
 
-        # setup logger
-        level = getattr(logging, args.verbose.upper(), None)
-        if not isinstance(level, int):
-            raise ValueError("level {} not supported".format(args.verbose))
-
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(levelname)s - %(filename)s - %(asctime)s - %(message)s"
-        )
-        logger = logging.getLogger()
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(level)
-
         
     elif args.sample:
-        level = getattr(logging, args.verbose.upper(), None)
-        if not isinstance(level, int):
-            raise ValueError("level {} not supported".format(args.verbose))
-
-        handler1 = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(levelname)s - %(filename)s - %(asctime)s - %(message)s"
-        )
-        handler1.setFormatter(formatter)
-        logger = logging.getLogger()
-        logger.addHandler(handler1)
-        logger.setLevel(level)
-        
         if not hasattr(args, 'sampling_order_path'):
             raise RuntimeError("No sampling order path is given")
         with open(os.path.join("sampling_orders", args.sampling_order_path), "r") as f:
@@ -164,8 +138,8 @@ def parse_args_and_config():
                 new_config.sampling_order[-1].image_folder = image_folder
                 new_config.sampling_order[-1].composition = order['composition']
                 new_config.sampling_order[-1].space_group = space_group
-                new_config.sampling_order[-1].random_lattice = order['random_lattice']
-                new_config.sampling_order[-1].random_positions = order['random_positions']
+                #new_config.sampling_order[-1].random_lattice = order['random_lattice']
+                #new_config.sampling_order[-1].random_positions = order['random_positions']
                 new_config.sampling_order[-1].count = order['count']
                 new_config.sampling_order[-1].T = order['T']
                 new_config.sampling_order[-1].only_final = order['only_final']
@@ -177,6 +151,18 @@ def parse_args_and_config():
                 os.makedirs(finals_dir, exist_ok=True)
                 new_config.sampling_order[-1].finals_dir = finals_dir
 
+    level = getattr(logging, args.verbose.upper(), None)
+    if not isinstance(level, int):
+        raise ValueError("level {} not supported".format(args.verbose))
+
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "%(levelname)s - %(filename)s - %(asctime)s - %(message)s"
+    )
+    logger = logging.getLogger()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(level)
     # add device
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     logging.info("Using device: {}".format(device))

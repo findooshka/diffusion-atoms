@@ -1,17 +1,5 @@
-name: "example"
+name: "example_17000"
 orders:
-    - config: "atoms_quasistable.yml"
-      space_group: 194
-      random_positions: True
-      random_lattice: True
-      composition:  # non-equivalent positions per element
-        Na: 1
-        Cl: 1
-      #template: "../data_primitive_test/mp-5788.cif"  # if not random positions/lattice
-      count: 5  # samples per space group
-      T: 60   # steps per noise level
-      only_final: False  # do not write intermediate structures
-
     - config: "atoms_quasistable.yml"
       space_group: [62, 194, 139, 63, 166, 123, 148, 164, 156, 129, 189, 160, 61, 33, 71, 146,
                     225, 221, 216, 227, 198, 223, 205, 229, 230, 204, 220, 217, 218, 206, 212, 200]
