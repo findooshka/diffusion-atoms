@@ -33,10 +33,19 @@ def apply_operation(operation, frac_coords):
 def apply_operations(operations, frac_coords):
     return np.vstack([apply_operation(operation, frac_coords) for operation in operations])
 
-def crystal_distance(pos1, pos2, norm=True):
+def crystal_distance(pos1, pos2, norm=True, L=None):
     pos1 = pos1.reshape(-1, 1, 3)
     pos2 = pos2.reshape(1, -1, 3)
     diff = (pos1 - pos2)%1
+    if L is not None:
+        diff_norms = []
+        inversions = ((0,0,0), (1,0,0), (0,1,0), (0,0,1), (0,1,1), (1,0,1), (1,1,0), (1,1,1))
+        for inversion in inversions:
+            inversion_diff = np.empty_like(diff)
+            for i, inverse in enumerate(inversion):
+                inversion_diff[:,:,i] = diff[:,:,i] - 1 if inverse else diff[:,:,i]
+            diff_norms.append(np.linalg.norm(inversion_diff@L, axis=-1))
+        return np.min(np.stack(diff_norms, axis=-1), axis=-1)
     diff = np.stack((diff, 1-diff))
     diff = diff.min(axis=0)
     if norm:
@@ -81,7 +90,7 @@ def apply_operations_atoms(atoms, operations, repeat_threshold=-1):
     if repeat_threshold > 0:
         index = [0]
         for i in range(1, len(elements)):
-            if (np.linalg.norm(crystal_distance(coords[i], coords[i%n:i:n], norm=False) @ atoms.lattice_mat, axis=-1) > repeat_threshold).all():
+            if (crystal_distance(coords[i], coords[i%n:i:n], L=atoms.lattice_mat) > repeat_threshold).all():
                 index.append(i)
         coords = coords[index]
         elements = list(np.array(elements)[index])
