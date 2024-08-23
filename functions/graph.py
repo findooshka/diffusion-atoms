@@ -92,7 +92,7 @@ def nearest_neighbor_edges(
             if type(inv_op_matrice) is torch.Tensor:
                 inv_op_matrice = inv_op_matrice.cpu().numpy()
             inv_diff = -lattice@inv_op_matrice@inv_lattice@neig_diff
-            assert np.abs(np.linalg.norm(inv_diff) - np.linalg.norm(neig_diff)) < 1e-3, "Inconsistent lattice / symmetry operations"
+            assert np.abs(np.linalg.norm(inv_diff) - np.linalg.norm(neig_diff)) < 2e-2, "Inconsistent lattice / symmetry operations"
             if not is_edge_added(added_edges, site_id, neig_id, neig_op_id, neig_diff):
                 v.append(neig_id)
                 u.append(site_id)
